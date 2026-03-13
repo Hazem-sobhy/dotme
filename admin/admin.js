@@ -550,63 +550,6 @@ async function loadProfile() {
     }
 }
 
-/* ================= LINKS ================= */
-
-async function loadLinks() {
-    try {
-        const res = await api("/api/admin/profile");
-        const data = await res.json();
-
-        const container = document.getElementById("links");
-        container.innerHTML = "";
-
-        // ترتيب الروابط حسب sort_order
-        const sortedLinks = data.links.sort((a, b) => {
-            return (a.sort_order || 0) - (b.sort_order || 0);
-        });
-
-        sortedLinks.forEach(link => {
-            const tr = document.createElement("tr");
-            
-            // ✅ الأهم: إضافة data-link-id
-            tr.setAttribute('data-link-id', link.id);
-            
-            // عمود السحب
-            const tdDrag = document.createElement("td");
-            tdDrag.className = 'drag-handle';
-            tdDrag.innerHTML = '⋮⋮';
-            tdDrag.style.cursor = 'grab';
-            tdDrag.style.width = '30px';
-            tdDrag.style.textAlign = 'center';
-            tdDrag.style.fontSize = '18px';
-            tdDrag.style.color = '#999';
-            
-            const tdName = document.createElement("td");
-            tdName.textContent = link.name;
-            
-            const tdAction = document.createElement("td");
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.className = "delete";
-            deleteBtn.addEventListener("click", () => deleteLink(link.id));
-            
-            tdAction.appendChild(deleteBtn);
-            tr.appendChild(tdDrag);
-            tr.appendChild(tdName);
-            tr.appendChild(tdAction);
-            
-            container.appendChild(tr);
-        });
-        
-        // تفعيل Drag & Drop
-        makeLinksDraggable();
-        await updateLinkCounter();
-        
-    } catch (e) {
-        console.error("Load links error", e);
-        toast("Failed to load links");
-    }
-}
 
 async function add() {
     const name = document.getElementById("name").value.trim()
@@ -862,105 +805,259 @@ document.addEventListener("DOMContentLoaded", () => {
 // ================= DRAG & DROP LINKS =================
 
 let draggedItem = null;
+let dragOverItem = null;
 
 function makeLinksDraggable() {
-
-    const rows = document.querySelectorAll("#links tr");
-
-    rows.forEach(row => {
-
+    const linksTable = document.getElementById('links');
+    if (!linksTable) return;
+    
+    const rows = linksTable.querySelectorAll('tr');
+    
+    rows.forEach((row) => {
         row.draggable = true;
+        row.setAttribute('draggable', 'true');
+        
+        // منع السحب من على الزر
+        const deleteBtn = row.querySelector('button');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
+        // إزالة event listeners قديمة
+        row.removeEventListener('dragstart', handleDragStart);
+        row.removeEventListener('dragenter', handleDragEnter);
+        row.removeEventListener('dragleave', handleDragLeave);
+        row.removeEventListener('dragover', handleDragOver);
+        row.removeEventListener('dragend', handleDragEnd);
+        row.removeEventListener('drop', handleDrop);
+        
+        // إضافة event listeners جديدة
+        row.addEventListener('dragstart', handleDragStart);
+        row.addEventListener('dragenter', handleDragEnter);
+        row.addEventListener('dragleave', handleDragLeave);
+        row.addEventListener('dragover', handleDragOver);
+        row.addEventListener('dragend', handleDragEnd);
+        row.addEventListener('drop', handleDrop);
+    });
+    
+    // إضافة CSS محسن
+    const style = document.createElement('style');
+    style.textContent = `
+        tr[draggable="true"] {
+            cursor: grab;
+        }
+        
+        tr[draggable="true"]:active {
+            cursor: grabbing;
+        }
+        
+        .drag-handle {
+            cursor: grab !important;
+            user-select: none;
+            font-size: 20px;
+            color: #999;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing !important;
+        }
+        
+        .dragging {
+            opacity: 0.5;
+            background: #f0fdf4 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .drag-over {
+            border-top: 2px solid #4CAF50 !important;
+        }
+        
+        .drag-over-bottom {
+            border-bottom: 2px solid #4CAF50 !important;
+        }
+        
+        /* منع تحديد النص أثناء السحب */
+        .dragging, .drag-over, .drag-over-bottom {
+            user-select: none;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
-        row.addEventListener("dragstart", (e) => {
-            draggedItem = row;
-            row.style.opacity = "0.5";
-        });
+function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
 
-        row.addEventListener("dragend", () => {
-            draggedItem = null;
-            row.style.opacity = "1";
-        });
+function handleDragEnter(e) {
+    e.preventDefault();
+    if (this !== draggedItem) {
+        dragOverItem = this;
+        
+        // تحديد مكان الإفلات (فوق أو تحت)
+        const rect = this.getBoundingClientRect();
+        const mouseY = e.clientY;
+        const middleY = rect.top + rect.height / 2;
+        
+        if (mouseY < middleY) {
+            this.classList.add('drag-over');
+            this.classList.remove('drag-over-bottom');
+        } else {
+            this.classList.add('drag-over-bottom');
+            this.classList.remove('drag-over');
+        }
+    }
+}
 
-        row.addEventListener("dragover", (e) => {
-            e.preventDefault();
-        });
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+    this.classList.remove('drag-over-bottom');
+}
 
-        row.addEventListener("drop", async (e) => {
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
 
-            e.preventDefault();
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('tr').forEach(row => {
+        row.classList.remove('drag-over');
+        row.classList.remove('drag-over-bottom');
+    });
+}
 
-            if (!draggedItem || draggedItem === row) return;
-
-            const container = document.getElementById("links");
-
-            const rowsArray = [...container.querySelectorAll("tr")];
-
-            const draggedIndex = rowsArray.indexOf(draggedItem);
-            const targetIndex = rowsArray.indexOf(row);
-
-            if (draggedIndex < targetIndex) {
-                container.insertBefore(draggedItem, row.nextSibling);
-            } else {
-                container.insertBefore(draggedItem, row);
-            }
-
-            await saveLinkOrder();
-        });
-
+async function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    this.classList.remove('drag-over');
+    this.classList.remove('drag-over-bottom');
+    
+    if (draggedItem && dragOverItem && draggedItem !== dragOverItem) {
+        const tbody = document.getElementById('links');
+        
+        // تحديد مكان الإفلات بدقة
+        const rect = this.getBoundingClientRect();
+        const mouseY = e.clientY;
+        const middleY = rect.top + rect.height / 2;
+        
+        if (mouseY < middleY) {
+            // إفلات فوق العنصر
+            tbody.insertBefore(draggedItem, dragOverItem);
+        } else {
+            // إفلات تحت العنصر
+            tbody.insertBefore(draggedItem, dragOverItem.nextSibling);
+        }
+        
+        // حفظ الترتيب الجديد
+        await saveLinkOrder();
+    }
+    
+    draggedItem = null;
+    dragOverItem = null;
+}
+// دالة مساعدة لتحديث أرقام الترتيب في الواجهة (اختياري)
+function updateSortNumbers() {
+    const rows = document.querySelectorAll('#links tr');
+    rows.forEach((row, index) => {
+        // يمكنك إضافة رقم الترتيب في عمود منفصل إذا أردت
+        row.setAttribute('data-sort-order', index);
+    });
+}
+async function saveLinkOrder() {
+    const tbody = document.getElementById('links');
+    const rows = tbody.querySelectorAll('tr');
+    
+    // ✅ الفورمات الأول: مصفوفة من الـ IDs بالترتيب
+    const order = [];
+    rows.forEach((row) => {
+        const linkId = row.getAttribute('data-link-id');
+        if (linkId && linkId !== "undefined") {
+            order.push(linkId);
+        }
     });
 
-}
-
-
-// ================= SAVE ORDER =================
-
-function getLinkOrder() {
-
-    const rows = document.querySelectorAll("#links tr");
-
-    const order = Array.from(rows)
-        .map(row => row.dataset.linkId)
-        .filter(id => id);
-
-    console.log("Saving order:", order);
-
-    return order;
-}
-
-
-async function saveLinkOrder() {
-
+    console.log("Saving order:", order); // للتصحيح
+    
     try {
-
-        const order = getLinkOrder();
-
-        if (!order.length) {
-            console.error("No order detected");
-            return;
-        }
-
         const res = await api("/api/links/reorder", {
             method: "POST",
-            body: JSON.stringify({ order })
+            body: JSON.stringify({ order }) // ✅ يرسل { order: ["id1","id2","id3"] }
+        });
+        
+        if (res.ok) {
+            toast("Links reordered successfully");
+        } else {
+            const error = await res.json();
+            console.error("Reorder failed:", error);
+            toast("Failed to save order");
+        }
+        
+    } catch (e) {
+        console.error("Reorder error:", e);
+        toast("Failed to save order");
+    }
+}
+// تحديث دالة loadLinks لإضافة data-link-id
+async function loadLinks() {
+    try {
+        const res = await api("/api/admin/profile");
+        const data = await res.json();
+
+        const container = document.getElementById("links");
+        container.innerHTML = "";
+
+        // ✅ ترتيب الروابط حسب sort_order (الأهم!)
+        const sortedLinks = data.links.sort((a, b) => {
+            return (a.sort_order || 0) - (b.sort_order || 0);
         });
 
-        if (!res.ok) {
-            console.error("Reorder failed:", await res.text());
-            toast("Failed to save order");
-            return;
-        }
-
-        console.log("Order saved successfully");
-
+        sortedLinks.forEach(link => {
+            const tr = document.createElement("tr");
+            tr.setAttribute('data-link-id', link.id);
+            tr.setAttribute('data-sort-order', link.sort_order || 0);
+            
+            // عمود السحب
+            const tdDrag = document.createElement("td");
+            tdDrag.className = 'drag-handle';
+            tdDrag.innerHTML = '⋮⋮';
+            tdDrag.style.cursor = 'grab';
+            tdDrag.style.width = '30px';
+            tdDrag.style.textAlign = 'center';
+            tdDrag.style.fontSize = '18px';
+            tdDrag.style.color = '#999';
+            
+            const tdName = document.createElement("td");
+            tdName.textContent = link.name;
+            
+            const tdAction = document.createElement("td");
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "Delete";
+            deleteBtn.className = "delete";
+            deleteBtn.addEventListener("click", () => deleteLink(link.id));
+            
+            tdAction.appendChild(deleteBtn);
+            tr.appendChild(tdDrag);
+            tr.appendChild(tdName);
+            tr.appendChild(tdAction);
+            
+            container.appendChild(tr);
+        });
+        
+        // ✅ تفعيل Drag & Drop بعد تحميل الروابط
+        makeLinksDraggable();
+        await updateLinkCounter();
+        
     } catch (e) {
-
-        console.error("Save order error:", e);
-        toast("Failed to reorder links");
-
+        console.error("Load links error", e);
+        toast("Failed to load links");
     }
-
 }
-
 
 
 /* ================= HAMBURGER MENU ================= */
