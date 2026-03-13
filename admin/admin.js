@@ -554,37 +554,57 @@ async function loadProfile() {
 
 async function loadLinks() {
     try {
-        const res = await api("/api/admin/profile")
-        const data = await res.json()
+        const res = await api("/api/admin/profile");
+        const data = await res.json();
 
-        const container = document.getElementById("links")
-        container.innerHTML = ""
+        const container = document.getElementById("links");
+        container.innerHTML = "";
 
-        data.links.forEach(link => {
-            const tr = document.createElement("tr")
+        // ترتيب الروابط حسب sort_order
+        const sortedLinks = data.links.sort((a, b) => {
+            return (a.sort_order || 0) - (b.sort_order || 0);
+        });
+
+        sortedLinks.forEach(link => {
+            const tr = document.createElement("tr");
             
-            const tdName = document.createElement("td")
-            tdName.textContent = link.name
+            // ✅ الأهم: إضافة data-link-id
+            tr.setAttribute('data-link-id', link.id);
             
-            const tdAction = document.createElement("td")
-            const deleteBtn = document.createElement("button")
-            deleteBtn.textContent = "Delete"
-            deleteBtn.className = "delete"
+            // عمود السحب
+            const tdDrag = document.createElement("td");
+            tdDrag.className = 'drag-handle';
+            tdDrag.innerHTML = '⋮⋮';
+            tdDrag.style.cursor = 'grab';
+            tdDrag.style.width = '30px';
+            tdDrag.style.textAlign = 'center';
+            tdDrag.style.fontSize = '18px';
+            tdDrag.style.color = '#999';
             
-            deleteBtn.addEventListener("click", () => deleteLink(link.id))
+            const tdName = document.createElement("td");
+            tdName.textContent = link.name;
             
-            tdAction.appendChild(deleteBtn)
-            tr.appendChild(tdName)
-            tr.appendChild(tdAction)
+            const tdAction = document.createElement("td");
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "Delete";
+            deleteBtn.className = "delete";
+            deleteBtn.addEventListener("click", () => deleteLink(link.id));
             
-            container.appendChild(tr)
-        })
+            tdAction.appendChild(deleteBtn);
+            tr.appendChild(tdDrag);
+            tr.appendChild(tdName);
+            tr.appendChild(tdAction);
+            
+            container.appendChild(tr);
+        });
         
-        await updateLinkCounter()
+        // تفعيل Drag & Drop
+        makeLinksDraggable();
+        await updateLinkCounter();
         
     } catch (e) {
-        console.error("Load links error", e)
-        toast("Failed to load links")
+        console.error("Load links error", e);
+        toast("Failed to load links");
     }
 }
 
