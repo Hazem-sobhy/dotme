@@ -99,7 +99,8 @@ async function connectDB() {
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    password_hash: { type: String, required: true },
+    googleId: { type: String, unique: true, sparse: true },
+    password_hash: { type: String },
     twofa_secret: String,
     refresh_token: String,
     refresh_token_version: { type: Number, default: 0 },
@@ -745,6 +746,168 @@ app.post("/api/logout", auth, async (req, res) => {
         console.error(`❌ [${req.requestId}] Logout error:`, err.message)
         res.status(500).json({ error: "Server error" })
     }
+})
+
+/* ================= GOOGLE OAUTH SETUP ================= */
+const session = require('express-session')
+const passport = require('passport')
+const GoogleStrategy = require('passport-google-oauth20').Strategy
+
+// ✅ إعداد session (مهم جدًا لـ Passport)
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: IS_PRODUCTION, // true في production (HTTPS)
+        maxAge: 1000 * 60 * 60 * 24 // 24 ساعة
+    }
+}))
+
+app.use(passport.initialize())
+app.use(passport.session())
+
+// ✅ استراتيجية Google
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback',
+    proxy: true
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        // البحث عن المستخدم باستخدام googleId
+        let user = await User.findOne({ googleId: profile.id })
+
+        if (user) {
+            // ✅ CASE 1: المستخدم موجود (Sign In)
+            console.log(`✅ Google user found: ${user.email}`)
+            return done(null, user)
+        }
+
+        // ✅ CASE 2: المستخدم مش موجود (Sign Up)
+        // نتأكد لو الإيميل مستخدم قبل كده بحساب عادي
+        const email = profile.emails?.[0]?.value
+        if (email) {
+            user = await User.findOne({ email })
+            if (user) {
+                // لو الإيميل موجود، نربط الحساب ده بـ Google ID
+                user.googleId = profile.id
+                await user.save()
+                console.log(`✅ Linked Google account to existing user: ${email}`)
+                return done(null, user)
+            }
+        }
+
+        // CASE 3: مستخدم جديد تمامًا
+        // نولد username من اسمه
+        const baseUsername = profile.displayName?.replace(/\s+/g, '').toLowerCase() || 'user'
+        let username = baseUsername
+        let counter = 1
+        while (await User.findOne({ username })) {
+            username = `${baseUsername}${counter}`
+            counter++
+        }
+
+        // ننشئ المستخدم الجديد
+        const newUser = await User.create({
+            username,
+            email: email || `${profile.id}@google.user`,
+            googleId: profile.id,
+            password_hash: null, // مفيش باسورد
+            refresh_token_version: 0
+        })
+
+        // ننشيله بروفايل
+        await Profile.create({ user_id: newUser._id })
+
+        console.log(`✅ New Google user created: ${username}`)
+        return done(null, newUser)
+
+    } catch (error) {
+        console.error('❌ Google OAuth error:', error)
+        return done(error, null)
+    }
+}))
+
+// ✅ serialize/deserialize user
+passport.serializeUser((user, done) => {
+    done(null, user.id)
+})
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id)
+        done(null, user)
+    } catch (error) {
+        done(error, null)
+    }
+})
+
+// ================= GOOGLE OAUTH ROUTES =================
+
+// ✅ بداية تسجيل الدخول بـ Google
+app.get('/auth/google',
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account' // يخلي المستخدم يختار الحساب كل مرة
+    })
+)
+
+// ✅ callback بعد موافقة Google
+app.get('/auth/google/callback',
+passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
+async (req, res) => {
+
+    const fingerprint = createFingerprint(req)
+
+    const version = req.user.refresh_token_version || 0
+
+    const { accessToken, refreshToken, csrfToken } = generateTokens(
+        req.user._id,
+        fingerprint,
+        version
+    )
+
+    await User.findByIdAndUpdate(req.user._id, {
+        refresh_token: refreshToken
+    })
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: IS_PRODUCTION,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+    res.redirect(`/admin/dashboard.html?token=${accessToken}&csrf=${csrfToken}`)
+})
+
+// ✅ API endpoint لمعرفة حالة المستخدم (اختياري)
+app.get('/api/current-user', (req, res) => {
+    if (req.user) {
+        res.json({ 
+            authenticated: true, 
+            user: {
+                id: req.user._id,
+                username: req.user.username,
+                email: req.user.email,
+                googleId: req.user.googleId
+            }
+        })
+    } else {
+        res.json({ authenticated: false })
+    }
+})
+
+// ✅ تسجيل الخروج
+app.get('/auth/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.error('Logout error:', err)
+            return res.status(500).json({ error: 'Logout failed' })
+        }
+        res.redirect('/')
+    })
 })
 
 /* ================= FILE UPLOAD (MIME Validation محسن) ================= */

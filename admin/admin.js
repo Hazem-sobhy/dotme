@@ -818,11 +818,14 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     }
 
-    const registerBtn = document.getElementById("registerBtn")
-    if (registerBtn) {
-        registerBtn.addEventListener("click", (e) => {
-            e.preventDefault()
-            showRegister()
+    const openRegisterBtn = document.getElementById("openRegisterBtn")
+
+    if (openRegisterBtn) {
+        openRegisterBtn.addEventListener("click", () => {
+
+            document.getElementById("loginBox").style.display = "none"
+            document.getElementById("registerSection").style.display = "block"
+
         })
     }
 

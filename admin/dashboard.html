@@ -180,40 +180,77 @@
 
         <!-- MAIN -->
         <div class="main">
+
             <!-- LOGIN -->
             <div id="loginBox" class="card">
                 <h2>Login</h2>
+
                 <input id="username" placeholder="Username" autocomplete="username">
                 <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
                 <button id="loginBtn">Login</button>
-                <div style="margin-top:10px; text-align:center">
+
+                <button id="openRegisterBtn" style="background:#3498db; margin-top:10px;">
+                    Sign Up
+                </button>
+
+                <a href="/auth/google" style="
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+            margin-top:15px;
+            padding:12px;
+            background:white;
+            color:#333;
+            border:1px solid #ddd;
+            border-radius:6px;
+            text-decoration:none;
+            font-weight:500;
+        ">
+                    <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px;">
+                    Continue with Google
+                </a>
+
+                <div style="margin-top:15px; text-align:center">
                     <a href="/forgot.html">Forgot password?</a>
                 </div>
-                <div style="margin-top:10px; text-align:center">
-                    <a href="#" id="registerBtn">Create account</a>
-                </div>
             </div>
+
+
+            <!-- REGISTER -->
+            <div id="registerSection" class="card" style="display:none">
+                <h2>Create Account</h2>
+
+                <input id="regUsername" placeholder="Username" autocomplete="username">
+                <input id="regEmail" placeholder="Email" type="email" autocomplete="email">
+                <input id="regPassword" type="password" placeholder="Password" autocomplete="new-password">
+
+                <button id="registerSubmitBtn">Create Account</button>
+
+                <button id="registerBackBtn" style="background:#777; margin-top:10px;">
+                    Back to Login
+                </button>
+            </div>
+
 
             <!-- 2FA -->
             <div id="twofaSection" class="card" style="display:none">
                 <h2>Two Factor Authentication</h2>
+
                 <input id="otp" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+
                 <button id="verifyBtn">Verify</button>
-                <button id="backLoginBtn">Back</button>
+
+                <button id="backLoginBtn" style="background:#777; margin-top:10px;">
+                    Back
+                </button>
+
                 <div style="margin-top:10px; text-align:center">
                     <a href="/cant-reach-otp.html">Can't reach OTP?</a>
                 </div>
             </div>
 
-            <!-- REGISTER -->
-            <div id="registerSection" class="card" style="display:none">
-                <h2>Create Account</h2>
-                <input id="regUsername" placeholder="Username" autocomplete="username">
-                <input id="regEmail" placeholder="Email" type="email" autocomplete="email">
-                <input id="regPassword" type="password" placeholder="Password" autocomplete="new-password">
-                <button id="registerSubmitBtn">Register</button>
-                <button id="registerBackBtn">Back</button>
-            </div>
 
             <!-- PANEL -->
             <div id="panel" style="display:none">
@@ -301,6 +338,30 @@
                 console.warn('CSRF token meta tag not found');
             }
         })();
+    </script>
+    <script nonce="{{nonce}}">
+        (function () {
+
+            const params = new URLSearchParams(window.location.search)
+
+            const token = params.get("token")
+            const csrf = params.get("csrf")
+
+            if (token) {
+
+                localStorage.setItem("token", token)
+                localStorage.setItem("csrf", csrf)
+
+                // تنظيف الرابط
+                window.history.replaceState({}, document.title, "/admin/dashboard.html")
+
+                // إخفاء login وإظهار dashboard
+                document.getElementById("loginBox").style.display = "none"
+                document.getElementById("panel").style.display = "block"
+
+            }
+
+        })()
     </script>
 </body>
 
