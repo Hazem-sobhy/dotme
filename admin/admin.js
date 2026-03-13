@@ -997,42 +997,41 @@ async function handleDrop(e) {
 }
 
 async function saveLinkOrder() {
-
     const tbody = document.getElementById('links');
     const rows = tbody.querySelectorAll('tr');
-
+    
     const order = [];
-
     rows.forEach((row, index) => {
-
-        const linkId = row.dataset.linkId;
-
-        if (!linkId) return;
-
+        // ✅ استخدم getAttribute بدلاً من dataset
+        const linkId = row.getAttribute('data-link-id');
+        // تجاهل أي صف لا يحتوي ID
+        if (!linkId || linkId === "undefined") return;
         order.push({
             id: linkId,
             order: index
         });
-
     });
 
-    console.log("Saving order:", order);
-
+    console.log("Saving order:", order); // للتصحيح
+    
     try {
-
         const res = await api("/api/links/reorder", {
             method: "POST",
             body: JSON.stringify({ order })
         });
-
+        
         if (res.ok) {
             toast("Links reordered successfully");
+        } else {
+            const error = await res.json();
+            console.error("Reorder failed:", error);
+            toast("Failed to save order");
         }
-
+        
     } catch (e) {
         console.error("Reorder error:", e);
+        toast("Failed to save order");
     }
-
 }
 // تحديث دالة loadLinks لإضافة data-link-id
 async function loadLinks() {
