@@ -134,6 +134,7 @@ function renderProfile(data) {
         })
     }
 
+    const username = window.location.pathname.slice(1)
     document.title = `${data.profile?.name || username} | Taplink`
     
     // ✅ تطبيق التخصيصات بعد تحميل كل حاجة
@@ -185,15 +186,6 @@ function showWelcomeScreen() {
     }
 }
 
-// Check if user is logged in (example)
-document.addEventListener("DOMContentLoaded", () => {
-    // Replace with actual auth check
-    const isLoggedIn = false
-    
-    if (!isLoggedIn) {
-        showWelcomeScreen()
-    }
-})
 
 /* ================= APPLY CUSTOMIZATIONS ================= */
 
