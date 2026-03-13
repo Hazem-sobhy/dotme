@@ -1536,23 +1536,44 @@ app.post("/api/links/reorder", auth, async (req, res) => {
         
         console.log("Received order:", order);
         
+        // ✅ التحقق من صحة البيانات
         if (!order || !Array.isArray(order)) {
             return res.status(400).json({ error: "Invalid order data" });
         }
         
-        for (const item of order) {
-            if (!item.id || typeof item.order !== 'number') {
-                throw new Error("Invalid order item");
+        // ✅ لو البيانات عبارة عن أ IDs بس (مثل: ["id1", "id2", "id3"])
+        if (typeof order[0] === 'string' || typeof order[0] === 'number') {
+            // تحديث الترتيب بناءً على الـ index
+            for (let i = 0; i < order.length; i++) {
+                const linkId = order[i];
+                const link = await Link.findOne({ _id: linkId, user_id: req.user.id });
+                
+                if (!link) {
+                    throw new Error(`Link ${linkId} not found or unauthorized`);
+                }
+                
+                link.sort_order = i;
+                await link.save();
             }
-            
-            const link = await Link.findOne({ _id: item.id, user_id: req.user.id });
-            
-            if (!link) {
-                throw new Error(`Link ${item.id} not found or unauthorized`);
+        } 
+        // ✅ لو البيانات عبارة عن array of objects (مثل: [{id: "id1", order: 0}, ...])
+        else if (typeof order[0] === 'object') {
+            for (const item of order) {
+                if (!item.id || typeof item.order !== 'number') {
+                    throw new Error("Invalid order item");
+                }
+                
+                const link = await Link.findOne({ _id: item.id, user_id: req.user.id });
+                
+                if (!link) {
+                    throw new Error(`Link ${item.id} not found or unauthorized`);
+                }
+                
+                link.sort_order = item.order;
+                await link.save();
             }
-            
-            link.sort_order = item.order;
-            await link.save();
+        } else {
+            throw new Error("Invalid order format");
         }
         
         await createAuditLog(req.user.id, 'LINKS_REORDERED', req);

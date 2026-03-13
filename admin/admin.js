@@ -991,23 +991,7 @@ async function saveLinkOrder() {
         }
     });
 
-    async function saveOrder() {
-    const rows = document.querySelectorAll("#links tr")
-    const order = []
-
-    rows.forEach(row => {
-        order.push(row.dataset.id)
-    })
-
-    console.log("Saving order:", order)
-
-    await api("/api/links/reorder", {
-        method: "POST",
-        body: JSON.stringify({ order })
-    })
-}
-    
-    //console.log("Saving order:", order); // للتصحيح
+    console.log("Saving order:", order); // للتصحيح
     
     try {
         const res = await api("/api/links/reorder", {
