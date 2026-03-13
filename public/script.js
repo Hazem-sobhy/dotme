@@ -614,43 +614,34 @@ function checkFontAwesome() {
     }, 100)
 }
 
-// ================= INIT =================
+/* ================= INIT ================= */
+
 document.addEventListener("DOMContentLoaded", () => {
     // Menu buttons
     document.getElementById("menuBtn")?.addEventListener("click", toggleMenu)
     document.getElementById("shareBtn")?.addEventListener("click", toggleShare)
-
+    
     // Share menu buttons
     document.getElementById("copyLinkBtn")?.addEventListener("click", copyLink)
     document.getElementById("qrBtn")?.addEventListener("click", showQR)
     document.getElementById("nativeShareBtn")?.addEventListener("click", nativeShare)
-
+    
     // Save contact
     document.getElementById("saveContactBtn")?.addEventListener("click", saveContact)
     document.getElementById("saveContactBtn")?.setAttribute('data-tooltip', 'Save to contacts')
-
+    
     // QR modal buttons
     document.getElementById("shareQrBtn")?.addEventListener("click", shareQR)
     document.getElementById("closeQrBtn")?.addEventListener("click", closeQR)
-
-    // ✅ تحديد الصفحة الحالية
-    const path = window.location.pathname
-    const isProfilePage = path !== '/' && !path.startsWith('/admin/') && !path.startsWith('/api/')
-    const welcomeScreen = document.getElementById('welcome-screen')
-    const profileContainer = document.querySelector('.container')
-
-    if (isProfilePage) {
-        // ✅ إذا كانت الصفحة صفحة بروفايل (مثل /omarfahmy)، نخفي شاشة الترحيب ونحمل البروفايل
-        if (welcomeScreen) welcomeScreen.style.display = 'none'
-        if (profileContainer) profileContainer.style.display = 'block'
-        load() // استدعاء دالة تحميل البروفايل
+    
+    // Load profile with cache
+    const cachedData = getFromLocalStorage('profile_' + window.location.pathname.replace("/", ""))
+    if (cachedData) {
+        renderProfile(cachedData)
     } else {
-        // ✅ إذا كانت الصفحة الرئيسية (/)، نظهر شاشة الترحيب
-        if (welcomeScreen) welcomeScreen.style.display = 'flex'
-        if (profileContainer) profileContainer.style.display = 'none'
-        // يمكنك هنا أيضًا إظهار محتوى ترويجي أو شاشة ترحيب بدلاً من البروفايل الفارغ.
+        load()
     }
-
+    
     initTooltips()
     checkFontAwesome()
 })
