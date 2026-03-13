@@ -1,9 +1,8 @@
 /* 
 ==================================================
   ULTIMATE PROFILE CARD - MULTI THEME EDITION
-  Version: 4.0 (Ultimate)
-  Author: AI Assistant
-  Description: بطاقة تعريفية متكاملة مع 6 ثيمات مختلفة
+  Version: 4.1 (Mobile Optimized)
+  Description: بطاقة تعريفية متكاملة مع تحسينات الموبايل
 ==================================================
 */
 
@@ -44,26 +43,27 @@ body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
     color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     min-height: 100vh;
+    margin: 0;
+    display: grid;
+    place-items: center;
     transition: background 0.4s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
 }
 
-/* ================= CONTAINER ================= */
+/* ================= CONTAINER - محسن للموبايل ================= */
 .container {
-    width: 380px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
     text-align: center;
     position: relative;
     padding-bottom: 30px;
     animation: floatIn 0.8s var(--transition-slow);
     border-radius: 40px;
     overflow: hidden;
+    background: white; /* افتراضي */
 }
 
 @keyframes floatIn {
@@ -105,6 +105,165 @@ body {
     transform: scale(1.1);
 }
 
+/* ================= AVATAR ================= */
+.avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 5px solid white;
+    margin-top: -65px;
+    object-fit: cover;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.4s var(--transition-normal);
+    position: relative;
+    z-index: 10;
+    background: white;
+}
+
+.avatar:hover {
+    transform: scale(1.08) rotate(3deg);
+    box-shadow: var(--shadow-hover);
+}
+
+/* ================= TYPOGRAPHY ================= */
+h1 {
+    margin: 15px 0 5px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    padding: 0 15px;
+    word-break: break-word;
+}
+
+#title {
+    color: #64748b;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 0 15px;
+}
+
+.bio {
+    margin: 15px auto 0;
+    font-size: 14px;
+    opacity: 0.8;
+    padding: 0 20px;
+    line-height: 1.6;
+    max-width: 100%;
+    word-break: break-word;
+}
+
+/* ================= CONTACT BUTTONS ================= */
+.contact-buttons {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 0 15px;
+}
+
+.circle-btn {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s var(--transition-normal);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.circle-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+.circle-btn:hover::before {
+    width: 120px;
+    height: 120px;
+}
+
+.circle-btn i {
+    font-size: 24px;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.circle-btn:hover {
+    transform: scale(1.15) translateY(-5px);
+    background: var(--primary-color) !important;
+    box-shadow: var(--shadow-lg);
+}
+
+.circle-btn:hover i {
+    transform: scale(1.1);
+    color: white !important;
+}
+
+/* ================= SAVE BUTTON ================= */
+.save-btn {
+    margin: 30px auto 0;
+    padding: 16px 32px;
+    width: calc(100% - 40px);
+    max-width: 320px;
+    border: none;
+    border-radius: 50px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+}
+
+.save-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.save-btn:hover::after {
+    width: 300px;
+    height: 300px;
+}
+
+.save-btn:hover {
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.save-btn:active {
+    transform: scale(0.98);
+}
 
 /* ================= WELCOME SCREEN (MINIMAL) ================= */
 .welcome-screen {
@@ -219,166 +378,14 @@ body {
     padding: 16px 10px 0;
     border-top: 1px solid #F3F4F6;
 }
-/* ================= AVATAR ================= */
-.avatar {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    border: 5px solid white;
-    margin-top: -65px;
-    object-fit: cover;
-    box-shadow: var(--shadow-lg);
-    transition: all 0.4s var(--transition-normal);
-    position: relative;
-    z-index: 10;
-    background: white;
-}
 
-.avatar:hover {
-    transform: scale(1.08) rotate(3deg);
-    box-shadow: var(--shadow-hover);
-}
-
-/* ================= TYPOGRAPHY ================= */
-h1 {
-    margin: 15px 0 5px;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-}
-
-#title {
-    color: #64748b;
-    margin: 0;
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.bio {
-    margin: 15px auto 0;
-    font-size: 14px;
-    opacity: 0.8;
-    padding: 0 25px;
-    line-height: 1.6;
-    max-width: 300px;
-}
-
-/* ================= CONTACT BUTTONS ================= */
-.contact-buttons {
-    margin-top: 25px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-
-.circle-btn {
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s var(--transition-normal);
-    text-decoration: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.circle-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
-}
-
-.circle-btn:hover::before {
-    width: 120px;
-    height: 120px;
-}
-
-.circle-btn i {
-    font-size: 24px;
-    color: var(--primary-color);
-    transition: transform 0.3s ease;
-    position: relative;
-    z-index: 2;
-}
-
-.circle-btn:hover {
-    transform: scale(1.15) translateY(-5px);
-    background: var(--primary-color) !important;
-    box-shadow: var(--shadow-lg);
-}
-
-.circle-btn:hover i {
-    transform: scale(1.1);
-    color: white !important;
-}
-
-/* ================= SAVE BUTTON ================= */
-.save-btn {
-    margin: 30px auto 0;
-    padding: 16px 32px;
-    width: 85%;
-    border: none;
-    border-radius: 50px;
-    background: var(--primary-color);
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-sm);
-}
-
-.save-btn::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.save-btn:hover::after {
-    width: 300px;
-    height: 300px;
-}
-
-.save-btn:hover {
-    transform: scale(1.03) translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
-
-.save-btn:active {
-    transform: scale(0.98);
-}
-
-/* ================= LINKS GRID ================= */
+/* ================= LINKS GRID - محسن للموبايل ================= */
 .links {
-    margin-top: 35px;
+    margin: 35px 15px 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    padding: 25px 20px;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 15px;
+    padding: 25px 15px;
     border-radius: 30px;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
@@ -411,8 +418,10 @@ h1 {
 .link:nth-child(9) { animation-delay: 0.5s; }
 
 .link img {
-    width: 85px;
-    height: 85px;
+    width: 100%;
+    max-width: 85px;
+    height: auto;
+    aspect-ratio: 1/1;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: var(--shadow-sm);
@@ -431,8 +440,10 @@ h1 {
     margin-top: 8px;
     color: inherit;
     font-weight: 500;
-    font-size: 13px;
+    font-size: clamp(11px, 3vw, 13px);
     transition: color 0.3s ease;
+    word-break: break-word;
+    padding: 0 5px;
 }
 
 .link:hover span {
@@ -480,7 +491,7 @@ h1 {
     transform: rotate(90deg);
 }
 
-/* ================= DROPDOWN MENUS ================= */
+/* ================= DROPDOWN MENUS - محسن للموبايل ================= */
 .menu-dropdown,
 .share-menu {
     display: none;
@@ -490,7 +501,8 @@ h1 {
     border-radius: 20px;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-    min-width: 200px;
+    min-width: 180px;
+    max-width: 90vw;
     animation: dropdownAppear 0.3s var(--transition-normal);
     z-index: 1000;
 }
@@ -509,21 +521,31 @@ h1 {
 .menu-dropdown { left: 0; }
 .share-menu { left: 55px; }
 
+@media (max-width: 420px) {
+    .share-menu {
+        left: 0;
+        top: 100px;
+    }
+}
+
 .menu-dropdown a,
 .share-menu button {
     display: block;
-    padding: 14px 25px;
+    padding: 14px 20px;
     border: none;
     background: transparent;
     text-decoration: none;
     cursor: pointer;
     width: 100%;
     text-align: left;
-    font-size: 14px;
+    font-size: clamp(13px, 4vw, 14px);
     font-weight: 500;
     transition: all 0.2s ease;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .menu-dropdown a:last-child,
@@ -535,10 +557,10 @@ h1 {
 .share-menu button:hover {
     background: rgba(76, 175, 80, 0.1);
     color: var(--primary-color);
-    padding-left: 35px;
+    padding-left: 30px;
 }
 
-/* ================= QR MODAL ================= */
+/* ================= QR MODAL - محسن للموبايل ================= */
 .qr-modal {
     display: none;
     position: fixed;
@@ -549,6 +571,7 @@ h1 {
     justify-content: center;
     z-index: 2000;
     animation: modalFadeIn 0.3s ease;
+    padding: 20px;
 }
 
 @keyframes modalFadeIn {
@@ -558,12 +581,14 @@ h1 {
 
 .qr-content {
     background: white;
-    padding: 40px;
+    padding: clamp(20px, 5vw, 40px);
     border-radius: 40px;
     text-align: center;
     box-shadow: var(--shadow-lg);
     transform: scale(0.9);
     animation: modalScaleIn 0.4s var(--transition-normal) forwards;
+    width: 100%;
+    max-width: 400px;
 }
 
 @keyframes modalScaleIn {
@@ -571,8 +596,10 @@ h1 {
 }
 
 .qr-content img {
-    width: 250px;
-    height: 250px;
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    aspect-ratio: 1/1;
     border-radius: 20px;
     margin-bottom: 20px;
 }
@@ -581,6 +608,13 @@ h1 {
     display: flex;
     gap: 15px;
     margin-top: 25px;
+    flex-direction: row;
+}
+
+@media (max-width: 420px) {
+    .qr-buttons {
+        flex-direction: column;
+    }
 }
 
 .qr-share,
@@ -589,7 +623,7 @@ h1 {
     padding: 14px 20px;
     border: none;
     border-radius: 50px;
-    font-size: 14px;
+    font-size: clamp(13px, 4vw, 14px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s var(--transition-normal);
@@ -627,13 +661,27 @@ h1 {
     color: white;
     padding: 14px 28px;
     border-radius: 50px;
-    font-size: 14px;
+    font-size: clamp(13px, 4vw, 14px);
     font-weight: 500;
     box-shadow: var(--shadow-lg);
     z-index: 3000;
     opacity: 0;
     transition: all 0.4s var(--transition-normal);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    width: fit-content;
+    max-width: 90vw;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 420px) {
+    #toast {
+        white-space: normal;
+        word-break: break-word;
+        max-width: calc(100vw - 40px);
+    }
 }
 
 #toast.show {
@@ -657,16 +705,16 @@ h1 {
 }
 
 .no-links-message {
-    grid-column: span 3;
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 40px;
+    padding: 40px 20px;
     color: #999;
-    font-size: 14px;
+    font-size: clamp(13px, 4vw, 14px);
 }
 
 /* ================= SCROLLBAR ================= */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -819,309 +867,166 @@ body.aurora .circle-btn i {
     color: white;
 }
 
-
 /* ================= APPLE MINIMAL LAYOUT ================= */
-
-body.minimal{
-
-background:#f5f5f7;
-color:#1d1d1f;
-
+body.minimal {
+    background: #f5f5f7;
+    color: #1d1d1f;
 }
 
-/* container يصبح بدون card */
-
-body.minimal .container{
-
-width:520px;
-max-width:100%;
-
-background:transparent;
-
-box-shadow:none;
-
-border:none;
-
+body.minimal .container {
+    max-width: 520px;
+    width: 100%;
+    background: transparent;
+    box-shadow: none;
+    border: none;
 }
 
-/* cover أصغر */
-
-body.minimal .cover{
-
-height:120px;
-
-border-radius:20px;
-
-margin-bottom:20px;
-
+body.minimal .cover {
+    height: 120px;
+    border-radius: 20px;
+    margin: 0 15px 20px;
 }
 
-/* avatar أصغر */
-
-body.minimal .avatar{
-
-width:90px;
-height:90px;
-
-border:4px solid white;
-
-margin-top:-45px;
-
+body.minimal .avatar {
+    width: 90px;
+    height: 90px;
+    border: 4px solid white;
+    margin-top: -45px;
 }
 
-/* النص */
-
-body.minimal h1{
-
-font-size:24px;
-
+body.minimal h1 {
+    font-size: clamp(20px, 6vw, 24px);
 }
 
-body.minimal #title{
-
-color:#6e6e73;
-
+body.minimal #title {
+    color: #6e6e73;
 }
 
-/* زر الحفظ */
-
-body.minimal .save-btn{
-
-background:#0071e3;
-
-border-radius:14px;
-
+body.minimal .save-btn {
+    background: #0071e3;
+    border-radius: 14px;
 }
 
-/* ================= LINKS تتحول LIST ================= */
-
-body.minimal .links{
-
-display:flex;
-
-flex-direction:column;
-
-gap:14px;
-
-padding:0;
-
-background:transparent;
-
+body.minimal .links {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 15px;
+    background: transparent;
+    margin: 35px 15px 0;
 }
 
-/* link style مثل iOS */
-
-body.minimal .link{
-
-display:flex;
-
-align-items:center;
-
-gap:14px;
-
-background:white;
-
-padding:14px 18px;
-
-border-radius:16px;
-
-box-shadow:
-0 4px 10px rgba(0,0,0,0.06);
-
-transition:.2s;
-
+body.minimal .link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: white;
+    padding: 14px 18px;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    transition: .2s;
 }
 
-body.minimal .link:hover{
-
-transform:translateY(-2px);
-
+body.minimal .link:hover {
+    transform: translateY(-2px);
 }
 
-/* الصورة تصبح icon */
-
-body.minimal .link img{
-
-width:45px;
-height:45px;
-
-border-radius:12px;
-
+body.minimal .link img {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
 }
 
-body.minimal .link span{
-
-font-size:16px;
-
-font-weight:500;
-
-}
-
-/* اخفاء النص تحت الصورة القديم */
-
-body.minimal .link span{
-
-margin-top:0;
-
+body.minimal .link span {
+    font-size: clamp(14px, 4vw, 16px);
+    font-weight: 500;
+    margin-top: 0;
 }
 
 /* ===== HACKER MOVIE THEME ===== */
-
-body.neon{
-
-background:#020402;
-
-color:#9aff9a;
-
-font-family:"Share Tech Mono", monospace;
-
-position:relative;
-
-overflow-x:hidden;
-
+body.neon {
+    background: #020402;
+    color: #9aff9a;
+    font-family: "Share Tech Mono", monospace;
+    position: relative;
+    overflow-x: hidden;
 }
 
-/* MATRIX BACKGROUND */
-
-body.neon::before{
-
-content:"";
-
-position:fixed;
-
-inset:0;
-
-background-image:
-radial-gradient(#00ff9c33 1px, transparent 1px);
-
-background-size:4px 4px;
-
-opacity:.15;
-
-z-index:-2;
-
+body.neon::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(#00ff9c33 1px, transparent 1px);
+    background-size: 4px 4px;
+    opacity: .15;
+    z-index: -2;
 }
 
-/* SCANLINES */
-
-body.neon::after{
-
-content:"";
-
-position:fixed;
-
-inset:0;
-
-background:repeating-linear-gradient(
-0deg,
-rgba(0,255,150,.03),
-rgba(0,255,150,.03) 2px,
-transparent 2px,
-transparent 4px
-);
-
-pointer-events:none;
-
-z-index:-1;
-
+body.neon::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,255,150,.03),
+        rgba(0,255,150,.03) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+    pointer-events: none;
+    z-index: -1;
 }
 
-/* MAIN PANEL */
-
-body.neon .container{
-
-background:rgba(0,10,0,.7);
-
-border:1px solid #00ff9c;
-
-box-shadow:
-0 0 20px #00ff9c44,
-inset 0 0 30px #00ff9c22;
-
-backdrop-filter:blur(3px);
-
+body.neon .container {
+    background: rgba(0,10,0,.7);
+    border: 1px solid #00ff9c;
+    box-shadow: 0 0 20px #00ff9c44, inset 0 0 30px #00ff9c22;
+    backdrop-filter: blur(3px);
 }
 
-/* PROFILE */
-
-body.neon .avatar{
-
-border:2px solid #00ff9c;
-
-box-shadow:0 0 15px #00ff9c;
-
+body.neon .avatar {
+    border: 2px solid #00ff9c;
+    box-shadow: 0 0 15px #00ff9c;
 }
 
-/* TEXT */
-
-body.neon h1{
-
-color:#00ff9c;
-
-text-shadow:0 0 10px #00ff9c;
-
+body.neon h1 {
+    color: #00ff9c;
+    text-shadow: 0 0 10px #00ff9c;
 }
 
-/* LINKS مثل commands */
-
-body.neon .link{
-
-border-bottom:1px solid #00ff9c33;
-
-padding:12px;
-
+body.neon .link {
+    border-bottom: 1px solid #00ff9c33;
+    padding: 12px;
 }
 
-body.neon .link span::before{
-
-content:"> ";
-
-color:#00ff9c;
-
+body.neon .link span::before {
+    content: "> ";
+    color: #00ff9c;
 }
 
-body.neon .link:hover{
-
-background:#001a00;
-
+body.neon .link:hover {
+    background: #001a00;
 }
 
-/* BUTTON */
-
-body.neon .save-btn{
-
-background:#001a00;
-
-border:1px solid #00ff9c;
-
-color:#00ff9c;
-
+body.neon .save-btn {
+    background: #001a00;
+    border: 1px solid #00ff9c;
+    color: #00ff9c;
 }
 
-body.neon .save-btn:hover{
-
-background:#00ff9c;
-
-color:#001100;
-
+body.neon .save-btn:hover {
+    background: #00ff9c;
+    color: #001100;
 }
 
-/* ICON BUTTONS */
-
-body.neon .icon-btn{
-
-border:1px solid #00ff9c;
-
-background:#001100;
-
+body.neon .icon-btn {
+    border: 1px solid #00ff9c;
+    background: #001100;
 }
 
-body.neon .icon-btn:hover{
-
-background:#00ff9c;
-
-color:#001100;
-
+body.neon .icon-btn:hover {
+    background: #00ff9c;
+    color: #001100;
 }
 
 /* ===== THEME 5: GLASSMORPHISM ===== */
@@ -1213,11 +1118,10 @@ body.sunset .link:hover span {
     color: #ff6b6b;
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
-@media (max-width: 420px) {
+/* ================= RESPONSIVE DESIGN - محسن بالكامل ================= */
+@media (max-width: 480px) {
     .container {
-        width: 100%;
-        margin: 15px;
+        margin: 10px auto;
         border-radius: 30px;
     }
     
@@ -1234,22 +1138,23 @@ body.sunset .link:hover span {
     }
     
     h1 {
-        font-size: 24px;
+        font-size: clamp(20px, 6vw, 24px);
+        margin: 12px 0 4px;
+    }
+    
+    #title {
+        font-size: clamp(12px, 3.5vw, 14px);
     }
     
     .bio {
-        padding: 0 20px;
-        font-size: 13px;
+        padding: 0 15px;
+        font-size: clamp(12px, 3.5vw, 13px);
+        margin: 12px auto 0;
     }
     
-    .links {
+    .contact-buttons {
         gap: 15px;
-        padding: 20px 15px;
-    }
-    
-    .link img {
-        width: 75px;
-        height: 75px;
+        margin-top: 20px;
     }
     
     .circle-btn {
@@ -1261,19 +1166,121 @@ body.sunset .link:hover span {
         font-size: 20px;
     }
     
+    .links {
+        margin: 25px 10px 0;
+        gap: 12px;
+        padding: 20px 10px;
+    }
+    
+    .link img {
+        max-width: 70px;
+    }
+    
     .save-btn {
-        width: 90%;
-        padding: 14px;
+        width: calc(100% - 30px);
+        padding: 14px 20px;
+        font-size: clamp(14px, 4vw, 15px);
+        margin: 25px auto 0;
     }
     
-    .qr-content {
-        width: 90%;
-        padding: 25px;
+    .top-bar {
+        top: 15px;
+        left: 15px;
+        gap: 10px;
     }
     
-    .qr-content img {
-        width: 200px;
-        height: 200px;
+    .icon-btn {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .icon-btn i {
+        font-size: 16px;
+    }
+    
+    .menu-dropdown,
+    .share-menu {
+        min-width: 160px;
+    }
+    
+    .menu-dropdown a,
+    .share-menu button {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        border-radius: 25px;
+    }
+    
+    .cover {
+        height: 130px;
+        border-radius: 0 0 25px 25px;
+    }
+    
+    .avatar {
+        width: 95px;
+        height: 95px;
+        margin-top: -47px;
+        border-width: 3px;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    .links {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .link img {
+        max-width: 65px;
+    }
+    
+    .contact-buttons {
+        gap: 12px;
+    }
+    
+    .circle-btn {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .circle-btn i {
+        font-size: 18px;
+    }
+    
+    .save-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+}
+
+/* تحسين اللمس للموبايل */
+@media (hover: none) and (pointer: coarse) {
+    .circle-btn:hover,
+    .link:hover img,
+    .save-btn:hover,
+    .icon-btn:hover {
+        transform: none;
+    }
+    
+    .circle-btn:active,
+    .link:active img,
+    .save-btn:active,
+    .icon-btn:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+    }
+    
+    .menu-dropdown a,
+    .share-menu button,
+    .qr-share,
+    .qr-close {
+        padding: 16px 20px;
     }
 }
 
@@ -1295,5 +1302,7 @@ body.sunset .link:hover span {
     .container {
         box-shadow: none !important;
         border: 1px solid #ddd !important;
+        max-width: 100%;
+        margin: 0;
     }
 }
