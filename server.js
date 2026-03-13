@@ -28,6 +28,16 @@ dns.setDefaultResultOrder('ipv4first')
 const app = express()
 app.set('trust proxy', 1)
 
+app.use(async (req, res, next) => {
+    try {
+        await connectDB()
+        next()
+    } catch (err) {
+        console.error("Database connection failed:", err)
+        res.status(500).json({ error: "Database connection error" })
+    }
+})
+
 // ✅ إعدادات البيئة
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 const IS_DEVELOPMENT = !IS_PRODUCTION
@@ -56,13 +66,13 @@ if (!cached) {
 
 async function connectDB() {
 
-    if (cached.conn) {
-        return cached.conn
-    }
+    if (cached.conn) return cached.conn
 
     if (!cached.promise) {
         cached.promise = mongoose.connect(process.env.MONGODB_URI, {
-            bufferCommands: false
+            bufferCommands: false,
+            serverSelectionTimeoutMS: 5000,
+            maxPoolSize: 10
         })
     }
 
@@ -76,7 +86,6 @@ async function connectDB() {
         throw e
     }
 }
-connectDB()
 
 /* ================= تعريف MongoDB Models ================= */
 
