@@ -222,13 +222,6 @@ const emailLimiter = rateLimit({
 })
 
 /* ================= FILE UPLOAD ================= */
-const uploadDir = path.join(__dirname, "public/uploads")
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true })
-    console.log("✅ Created uploads directory:", uploadDir)
-} else {
-    console.log("✅ Uploads directory exists:", uploadDir)
-}
 
 const storage = multer.diskStorage({
     destination: uploadDir,
