@@ -27,6 +27,17 @@
             text-align: center;
             max-width: 400px;
             width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #94a3b8;
+            margin-bottom: 20px;
         }
 
         img {
@@ -35,10 +46,17 @@
             border-radius: 8px;
             display: none;
             margin: 20px auto;
+            border: 2px solid #6366f1;
         }
 
         #error {
             color: #ef4444;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        #message {
+            color: #10b981;
             margin-top: 15px;
             font-size: 14px;
         }
@@ -78,10 +96,11 @@
             }
         }
 
-        .message {
-            color: #10b981;
-            margin-top: 15px;
-            font-size: 14px;
+        .debug {
+            font-size: 10px;
+            color: #4b5563;
+            margin-top: 20px;
+            text-align: left;
         }
     </style>
 
@@ -91,9 +110,9 @@
 
     <div class="box">
 
-        <h2>New QR Code</h2>
+        <h2>Reset Two-Factor Authentication</h2>
 
-        <p>Scan with Google Authenticator</p>
+        <p>Generate a new QR code for Google Authenticator</p>
 
         <div class="loading" id="loading"></div>
 
@@ -102,7 +121,10 @@
         <p id="error"></p>
         <p id="message" class="message"></p>
 
-        <a href="/admin/dashboard.html" class="back-link">← Back to Login</a>
+        <a href="/admin/dashboard.html" class="back-link">← Back to Dashboard</a>
+
+        <!-- للتصحيح فقط (حذف بعد التأكد من الشغل) -->
+        <div class="debug" id="debug"></div>
 
     </div>
     <script src="/reset-2fa.js"></script>
