@@ -1002,14 +1002,15 @@ async function saveLinkOrder() {
     
     const order = [];
     rows.forEach((row, index) => {
-        const linkId = row.getAttribute('data-link-id');
-        if (linkId) {
-            order.push({
-                id: linkId,
-                order: index
-            });
-        }
+        const linkId = row.dataset.linkId;
+        // تجاهل أي صف لا يحتوي ID
+        if (!linkId || linkId === "undefined") return;
+        order.push({
+            id: linkId,
+            order: index
+        });
     });
+
 
     console.log("Saving order:", order); // للتصحيح
     
