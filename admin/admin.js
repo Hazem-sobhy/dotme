@@ -997,58 +997,43 @@ async function handleDrop(e) {
 }
 
 async function saveLinkOrder() {
+
     const tbody = document.getElementById('links');
     const rows = tbody.querySelectorAll('tr');
-    
+
     const order = [];
+
     rows.forEach((row, index) => {
-        const linkId = row.getAttribute('data-link-id');
-        if (linkId) {
-            order.push({
-                id: parseInt(linkId),
-                order: index
-            });
-        }
+
+        const linkId = row.dataset.linkId;
+
+        if (!linkId) return;
+
+        order.push({
+            id: linkId,
+            order: index
+        });
+
     });
 
-    async function saveOrder() {
-    const rows = document.querySelectorAll("#links tr")
-    const order = []
+    console.log("Saving order:", order);
 
-    rows.forEach(row => {
-        order.push(row.dataset.id)
-    })
-
-    console.log("Saving order:", order)
-
-    await api("/api/links/reorder", {
-        method: "POST",
-        body: JSON.stringify({ order })
-    })
-}
-    
-    //console.log("Saving order:", order); // للتصحيح
-    
     try {
+
         const res = await api("/api/links/reorder", {
             method: "POST",
             body: JSON.stringify({ order })
         });
-        
+
         if (res.ok) {
             toast("Links reordered successfully");
-        } else {
-            const error = await res.json();
-            console.error("Reorder failed:", error);
-            toast("Failed to save order");
         }
-        
+
     } catch (e) {
         console.error("Reorder error:", e);
-        toast("Failed to save order");
     }
-}
 
+}
 // تحديث دالة loadLinks لإضافة data-link-id
 async function loadLinks() {
     try {
