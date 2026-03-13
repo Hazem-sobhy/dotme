@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Themes | Taplink</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .theme-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-card.active {
+            border-color: #4CAF50;
+            transform: scale(1.02);
+        }
+
+        .theme-preview {
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* تأثيرات حية للمعاينة */
+        .theme-preview.neon-preview::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: previewShine 2s infinite;
+        }
+
+        .theme-preview.neon-preview::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(0, 255, 255, 0.2) 0%, transparent 60%),
+                radial-gradient(circle at 70% 50%, rgba(255, 0, 255, 0.2) 0%, transparent 60%);
+            animation: previewPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes previewShine {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes previewPulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .theme-info {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .theme-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .customize-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .customize-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .customize-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .customize-item label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .color-input {
+            width: 100%;
+            height: 50px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-input:hover {
+            border-color: #4CAF50;
+            transform: scale(1.02);
+        }
+
+        select,
+        input[type="range"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        select:hover,
+        input[type="range"]:hover {
+            border-color: #4CAF50;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        .secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+            border: none;
+        }
+
+        .preview-frame {
+            margin-top: 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 2px solid #e5e7eb;
+            height: 650px;
+            transition: all 0.3s ease;
+        }
+
+        .preview-frame:hover {
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .preview-note {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 12px;
+            text-align: center;
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 30px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 150px;
+            padding: 14px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button-group button:first-child {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .button-group button:first-child:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .button-group button.secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            background: #f3f4f6;
+            border: 2px dashed #9ca3af;
+            padding: 12px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-button:hover {
+            border-color: #4CAF50;
+            background: #f0fdf4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <h2>Themes</h2>
+            <hr>
+            <button onclick="window.location.href='/admin/dashboard.html'" class="secondary">← Dashboard</button>
+        </div>
+
+        <div class="main">
+            <!-- Theme Gallery -->
+            <div class="card">
+                <h3>🎨 Choose Theme</h3>
+                <div class="themes-grid" id="themesGrid">
+                    <!-- القوالب ستظهر هنا -->
+                </div>
+            </div>
+
+            <!-- Customization Panel -->
+            <div class="card">
+                <h3>⚙️ Customize Theme</h3>
+                <div class="customize-panel">
+                    <div class="customize-grid">
+                        <div class="customize-item">
+                            <label>🎯 Primary Color</label>
+                            <input type="color" id="primaryColor" class="color-input" value="#4CAF50"
+                                oninput="updatePreviewFrame()">
+                        </div>
+
+                        <div class="customize-item">
+                            <label>🖼️ Background Color</label>
+                            <input type="color" id="bgColor" class="color-input" value="#ffffff"
+                                oninput="updatePreviewFrame()">
+                        </div>
+
+                        <div class="customize-item">
+                            <label>📝 Text Color</label>
+                            <input type="color" id="textColor" class="color-input" value="#000000"
+                                oninput="updatePreviewFrame()">
+                        </div>
+
+                        <div class="customize-item">
+                            <label>🔤 Font Family</label>
+                            <select id="fontFamily" onchange="updatePreviewFrame()">
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="'Inter', sans-serif">Inter</option>
+                                <option value="'Poppins', sans-serif">Poppins</option>
+                                <option value="'Helvetica', sans-serif">Helvetica</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                                <option value="'Georgia', serif">Georgia</option>
+                                <option value="'Verdana', sans-serif">Verdana</option>
+                                <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                                <option value="'Roboto', sans-serif">Roboto</option>
+                                <option value="'Open Sans', sans-serif">Open Sans</option>
+                                <option value="'Montserrat', sans-serif">Montserrat</option>
+                                <option value="'Playfair Display', serif">Playfair Display</option>
+                            </select>
+                        </div>
+
+                        <div class="customize-item">
+                            <label>🔄 Border Radius</label>
+                            <input type="range" id="borderRadius" min="0" max="50" value="16"
+                                oninput="updateRadiusValue(); updatePreviewFrame()">
+                            <span id="radiusValue" class="range-value">16px</span>
+                        </div>
+
+                        <div class="customize-item">
+                            <label>🔘 Button Style</label>
+                            <select id="buttonStyle" onchange="updatePreviewFrame()">
+                                <option value="rounded">Rounded (Recommended)</option>
+                                <option value="pill">Pill Shape</option>
+                                <option value="square">Square</option>
+                                <option value="outline">Outline</option>
+                                <option value="glass">Glass Effect</option>
+                                <option value="neon">Neon Glow</option>
+                            </select>
+                        </div>
+
+                        <div class="customize-item">
+                            <label>🌅 Background Image</label>
+                            <div class="file-input-wrapper">
+                                <div class="file-input-button" id="fileInputButton">
+                                    📁 Choose Image or Drag
+                                </div>
+                                <input type="file" id="bgImage" accept="image/*" onchange="uploadBGImage()">
+                            </div>
+                        </div>
+
+                        <div class="customize-item">
+                            <label>✨ Animation Speed</label>
+                            <select id="animationSpeed" onchange="updatePreviewFrame()">
+                                <option value="0.3">Normal (0.3s)</option>
+                                <option value="0.5">Slow (0.5s)</option>
+                                <option value="0.2">Fast (0.2s)</option>
+                                <option value="0">No Animation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button onclick="saveTheme()">
+                            <span>💾</span> Save Theme
+                        </button>
+                        <button onclick="resetTheme()" class="secondary">
+                            <span>↺</span> Reset to Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="card">
+                <h3>👁️ Live Preview</h3>
+                <div class="preview-frame">
+                    <iframe id="previewFrame" src="/preview.html"></iframe>
+                </div>
+                <div class="preview-note">
+                    ⚡ التغييرات تظهر مباشرة في المعاينة أعلاه | استخدم المعاينة لترى كيف سيبدو موقعك
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // ================= API WRAPPER =================
+        let inMemoryToken = null;
+        let csrfToken = null;
+
+        async function api(url, options = {}) {
+            if (!inMemoryToken) {
+                const restored = await restoreSession();
+                if (!restored) {
+                    window.location.href = '/admin/dashboard.html';
+                    throw new Error('No token');
+                }
+            }
+
+            options.credentials = 'include';
+            options.headers = {
+                ...(options.headers || {}),
+                'Authorization': 'Bearer ' + inMemoryToken,
+                'X-CSRF-Token': csrfToken
+            };
+
+            if (!(options.body instanceof FormData)) {
+                options.headers['Content-Type'] = 'application/json';
+            }
+
+            let res = await fetch(url, options);
+
+            if (res.status === 401) {
+                try {
+                    const refreshRes = await fetch('/api/refresh-token', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'X-CSRF-Token': csrfToken,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (refreshRes.ok) {
+                        const data = await refreshRes.json();
+                        inMemoryToken = data.token;
+                        csrfToken = data.csrfToken;
+
+                        options.headers['Authorization'] = 'Bearer ' + inMemoryToken;
+                        options.headers['X-CSRF-Token'] = csrfToken;
+
+                        res = await fetch(url, options);
+                    } else {
+                        window.location.href = '/admin/dashboard.html';
+                        throw new Error('Session expired');
+                    }
+                } catch (e) {
+                    window.location.href = '/admin/dashboard.html';
+                    throw new Error('Session expired');
+                }
+            }
+
+            return res;
+        }
+
+        async function restoreSession() {
+            try {
+                const res = await fetch('/api/refresh-token', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        "X-CSRF-Token": csrfToken || "",
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!res.ok) return false;
+
+                const data = await res.json();
+                inMemoryToken = data.token;
+                csrfToken = data.csrfToken;
+
+                return true;
+
+            } catch (e) {
+                console.error('Session restore error:', e);
+                return false;
+            }
+        }
+
+        // ================= TOAST FUNCTION =================
+        function toast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            t.style.opacity = '1';
+            t.style.background = type === 'success' ? 'rgba(76, 175, 80, 0.95)' : 'rgba(244, 67, 54, 0.95)';
+
+            setTimeout(() => {
+                t.style.opacity = '0';
+                setTimeout(() => {
+                    t.style.display = 'none';
+                }, 300);
+            }, 2700);
+        }
+
+        // ================= THEMES DATA (كلها مجانية) =================
+        const predefinedThemes = [
+            // Basic Themes
+            {
+                id: 1,
+                name: '🌑 Dark Modern',
+                preview: 'linear-gradient(135deg, #0f172a, #020617)',
+                class: 'dark',
+                description: 'Modern dark theme with deep shadows'
+            },
+            {
+                id: 2,
+                name: '☀️ Light Clean',
+                preview: 'linear-gradient(135deg, #ffffff, #f8fafc)',
+                class: 'light',
+                description: 'Clean and minimal light theme'
+            },
+            {
+                id: 3,
+                name: '📱 Minimal',
+                preview: '#fafafa',
+                class: 'minimal',
+                description: 'Simple and distraction-free'
+            },
+            {
+                id: 4,
+                name: '🌈 Aurora Borealis',
+                preview: 'radial-gradient(circle at 30% 30%, #ff0080, #7928ca, #00c6ff)',
+                class: 'aurora',
+                description: 'Northern lights effect with flowing colors'
+            },
+            {
+                id: 5,
+                name: '💿 Neon Hacker',
+                preview: '#030014',
+                class: 'neon',
+                description: 'Hacker Movie Theme inspired with neon glitch'
+            },
+            {
+                id: 6,
+                name: '🥂 Glassmorphism',
+                preview: 'url(https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500)',
+                class: 'glass',
+                description: 'Elegant glass effect with blur'
+            },
+            {
+                id: 7,
+                name: '🌅 Sunset Vibes',
+                preview: 'linear-gradient(135deg, #ff6b6b, #feca57, #ff9f43)',
+                class: 'sunset',
+                description: 'Warm sunset gradient colors'
+            },
+            {
+                id: 8,
+                name: '⚡ Ocean Deep',
+                preview: 'linear-gradient(135deg, #00b4db, #0083b0, #005aa7)',
+                class: 'ocean',
+                description: 'Deep ocean blues and teals'
+            },
+            {
+                id: 9,
+                name: '🌿 Forest',
+                preview: 'linear-gradient(135deg, #134e5e, #71b280)',
+                class: 'forest',
+                description: 'Natural forest green tones'
+            },
+            {
+                id: 10,
+                name: '🍂 Autumn',
+                preview: 'linear-gradient(135deg, #f12711, #f5af19)',
+                class: 'autumn',
+                description: 'Warm autumn colors'
+            },
+            {
+                id: 11,
+                name: '💜 Lavender',
+                preview: 'linear-gradient(135deg, #baabf9, #d8b5ff)',
+                class: 'lavender',
+                description: 'Soft purple gradients'
+            },
+            {
+                id: 12,
+                name: '🎮 Retro Game',
+                preview: 'linear-gradient(135deg, #654ea3, #eaafc8)',
+                class: 'retro',
+                description: '80s retro game inspired'
+            },
+            {
+                id: 13,
+                name: '🌌 Midnight',
+                preview: 'linear-gradient(135deg, #141e30, #243b55)',
+                class: 'midnight',
+                description: 'Deep night sky with stars'
+            },
+            {
+                id: 14,
+                name: '🍊 Citrus',
+                preview: 'linear-gradient(135deg, #fdc830, #f37335)',
+                class: 'citrus',
+                description: 'Fresh citrus orange theme'
+            }
+        ];
+
+        let customTheme = null;
+
+        async function loadThemes() {
+            try {
+                const profileRes = await api("/api/admin/profile");
+                const profileData = await profileRes.json();
+                const currentThemeName = profileData.profile?.theme || 'dark';
+
+                const grid = document.getElementById('themesGrid');
+
+                // عرض كل الثيمات بدون أي تحقق من Premium
+                grid.innerHTML = predefinedThemes.map(theme => {
+                    // إضافة كلاس خاص لمعاينة النيون
+                    const previewClass = theme.class === 'neon' ? 'neon-preview' : '';
+
+                    return `
+                        <div class="theme-card ${theme.class === currentThemeName ? 'active' : ''}" onclick="selectTheme('${theme.class}')">
+                            <div class="theme-preview ${previewClass}" style="background: ${theme.preview}; background-size: cover; background-position: center;"></div>
+                            <div class="theme-info">
+                                <div class="theme-name">${theme.name}</div>
+                                <div style="font-size: 12px; color: #6b7280; margin: 5px 0;">${theme.description}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error("Themes error:", e);
+                toast("Failed to load themes", 'error');
+            }
+        }
+
+        async function selectTheme(themeClass) {
+            try {
+                // ✅ تم إزالة التحقق من Premium تماماً
+                await api("/api/admin/select-theme", {
+                    method: 'POST',
+                    body: JSON.stringify({ theme: themeClass })
+                });
+
+                toast("✨ Theme applied successfully!");
+                loadThemes();
+
+                // تحديث خيارات التخصيص حسب الثيم
+                updateCustomizationForTheme(themeClass);
+
+            } catch (e) {
+                console.error("Select theme error:", e);
+                toast("Failed to apply theme", 'error');
+            }
+        }
+
+        function updateCustomizationForTheme(themeClass) {
+            // تحديث ألوان التخصيص حسب الثيم المختار
+            switch (themeClass) {
+                case 'dark':
+                    document.getElementById('bgColor').value = '#0f172a';
+                    document.getElementById('textColor').value = '#ffffff';
+                    document.getElementById('primaryColor').value = '#4CAF50';
+                    break;
+                case 'light':
+                    document.getElementById('bgColor').value = '#f8fafc';
+                    document.getElementById('textColor').value = '#0f172a';
+                    document.getElementById('primaryColor').value = '#4CAF50';
+                    break;
+                case 'minimal':
+                    document.getElementById('bgColor').value = '#fafafa';
+                    document.getElementById('textColor').value = '#2c3e50';
+                    document.getElementById('primaryColor').value = '#3498db';
+                    break;
+                case 'aurora':
+                    document.getElementById('bgColor').value = '#020617';
+                    document.getElementById('textColor').value = '#ffffff';
+                    document.getElementById('primaryColor').value = '#ff0080';
+                    break;
+                case 'neon':
+                    document.getElementById('bgColor').value = '#030014';
+                    document.getElementById('textColor').value = '#ffffff';
+                    document.getElementById('primaryColor').value = '#00ffff';
+                    document.getElementById('borderRadius').value = '16';
+                    document.getElementById('buttonStyle').value = 'neon';
+                    break;
+                case 'glass':
+                    document.getElementById('bgColor').value = 'rgba(255,255,255,0.1)';
+                    document.getElementById('textColor').value = '#ffffff';
+                    document.getElementById('primaryColor').value = '#ffffff';
+                    document.getElementById('buttonStyle').value = 'glass';
+                    break;
+                case 'sunset':
+                    document.getElementById('bgColor').value = '#ff6b6b';
+                    document.getElementById('textColor').value = '#2d3436';
+                    document.getElementById('primaryColor').value = '#ff6b6b';
+                    break;
+                case 'ocean':
+                    document.getElementById('bgColor').value = '#00b4db';
+                    document.getElementById('textColor').value = '#e0f2fe';
+                    document.getElementById('primaryColor').value = '#00b4db';
+                    break;
+                case 'forest':
+                    document.getElementById('bgColor').value = '#134e5e';
+                    document.getElementById('textColor').value = '#d1fae5';
+                    document.getElementById('primaryColor').value = '#71b280';
+                    break;
+                case 'autumn':
+                    document.getElementById('bgColor').value = '#f12711';
+                    document.getElementById('textColor').value = '#2d1b0e';
+                    document.getElementById('primaryColor').value = '#f12711';
+                    break;
+                case 'lavender':
+                    document.getElementById('bgColor').value = '#baabf9';
+                    document.getElementById('textColor').value = '#2d1b3c';
+                    document.getElementById('primaryColor').value = '#baabf9';
+                    break;
+                case 'retro':
+                    document.getElementById('bgColor').value = '#654ea3';
+                    document.getElementById('textColor').value = '#f0e6d2';
+                    document.getElementById('primaryColor').value = '#eaafc8';
+                    break;
+                case 'midnight':
+                    document.getElementById('bgColor').value = '#141e30';
+                    document.getElementById('textColor').value = '#e2e8f0';
+                    document.getElementById('primaryColor').value = '#4a90e2';
+                    break;
+                case 'citrus':
+                    document.getElementById('bgColor').value = '#fdc830';
+                    document.getElementById('textColor').value = '#2d1b0e';
+                    document.getElementById('primaryColor').value = '#fdc830';
+                    break;
+            }
+            updateRadiusValue();
+            updatePreviewFrame();
+        }
+
+        async function loadCurrentTheme() {
+            try {
+                const res = await api("/api/admin/profile");
+                const data = await res.json();
+
+                customTheme = data.profile.custom_theme || {
+                    primaryColor: "#4CAF50",
+                    bgColor: "#ffffff",
+                    textColor: "#000000",
+                    fontFamily: "'Inter', sans-serif",
+                    borderRadius: 16,
+                    buttonStyle: "rounded",
+                    animationSpeed: "0.3",
+                    backgroundImage: null
+                };
+
+                document.getElementById('primaryColor').value = customTheme.primaryColor;
+                document.getElementById('bgColor').value = customTheme.bgColor;
+                document.getElementById('textColor').value = customTheme.textColor;
+                document.getElementById('fontFamily').value = customTheme.fontFamily;
+                document.getElementById('borderRadius').value = customTheme.borderRadius;
+                document.getElementById('buttonStyle').value = customTheme.buttonStyle;
+                document.getElementById('animationSpeed').value = customTheme.animationSpeed || "0.3";
+                document.getElementById('radiusValue').textContent = customTheme.borderRadius + 'px';
+
+                // تحديث iframe بعد تحميل الإعدادات
+                setTimeout(() => {
+                    updatePreviewFrame();
+                }, 500);
+
+            } catch (e) {
+                console.error("Load theme error:", e);
+            }
+        }
+
+        function updateRadiusValue() {
+            document.getElementById('radiusValue').textContent =
+                document.getElementById('borderRadius').value + 'px';
+        }
+
+        async function uploadBGImage() {
+            const file = document.getElementById('bgImage').files[0];
+            if (!file) return;
+
+            // تحديث اسم الملف في الزر
+            document.getElementById('fileInputButton').innerHTML = `📁 ${file.name}`;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await api("/api/upload", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+                customTheme.backgroundImage = data.url;
+                toast("✅ Background uploaded!");
+                updatePreviewFrame();
+
+            } catch (e) {
+                console.error("Upload error:", e);
+                toast("❌ Upload failed", 'error');
+                document.getElementById('fileInputButton').innerHTML = '📁 Choose Image or Drag';
+            }
+        }
+
+        async function saveTheme() {
+            try {
+                const themeData = {
+                    primaryColor: document.getElementById('primaryColor').value,
+                    bgColor: document.getElementById('bgColor').value,
+                    textColor: document.getElementById('textColor').value,
+                    fontFamily: document.getElementById('fontFamily').value,
+                    borderRadius: parseInt(document.getElementById('borderRadius').value),
+                    buttonStyle: document.getElementById('buttonStyle').value,
+                    animationSpeed: document.getElementById('animationSpeed').value,
+                    backgroundImage: customTheme?.backgroundImage || null
+                };
+
+                await api("/api/admin/save-theme", {
+                    method: 'POST',
+                    body: JSON.stringify(themeData)
+                });
+
+                toast("✅ Theme saved successfully!");
+
+            } catch (e) {
+                console.error("Save theme error:", e);
+                toast("❌ Failed to save theme", 'error');
+            }
+        }
+
+        function resetTheme() {
+            if (confirm("Reset to default theme?")) {
+                document.getElementById('primaryColor').value = "#4CAF50";
+                document.getElementById('bgColor').value = "#ffffff";
+                document.getElementById('textColor').value = "#000000";
+                document.getElementById('fontFamily').value = "'Inter', sans-serif";
+                document.getElementById('borderRadius').value = "16";
+                document.getElementById('buttonStyle').value = "rounded";
+                document.getElementById('animationSpeed').value = "0.3";
+                customTheme.backgroundImage = null;
+                document.getElementById('fileInputButton').innerHTML = '📁 Choose Image or Drag';
+
+                updateRadiusValue();
+                updatePreviewFrame();
+                toast("Theme reset to default");
+            }
+        }
+
+        function updatePreviewFrame() {
+            const preview = document.getElementById('previewFrame');
+            if (preview && preview.contentWindow) {
+                preview.contentWindow.postMessage({
+                    type: 'updateTheme',
+                    theme: {
+                        primaryColor: document.getElementById('primaryColor').value,
+                        bgColor: document.getElementById('bgColor').value,
+                        textColor: document.getElementById('textColor').value,
+                        fontFamily: document.getElementById('fontFamily').value,
+                        borderRadius: document.getElementById('borderRadius').value,
+                        buttonStyle: document.getElementById('buttonStyle').value,
+                        animationSpeed: document.getElementById('animationSpeed').value,
+                        backgroundImage: customTheme?.backgroundImage || null
+                    }
+                }, '*');
+            }
+        }
+
+        // إضافة مستمع لرسائل من iframe
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'previewLoaded') {
+                updatePreviewFrame();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemes();
+            loadCurrentTheme();
+
+            document.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('input', updatePreviewFrame);
+                el.addEventListener('change', updatePreviewFrame);
+            });
+
+            // تحديث المعاينة كل 500ms أثناء السحب على range
+            document.getElementById('borderRadius').addEventListener('mousemove', updatePreviewFrame);
+        });
+    </script>
+</body>
+
+</html>

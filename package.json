@@ -1,0 +1,96 @@
+{
+  "name": "dotme",
+  "version": "1.0.0",
+  "description": "DotMe - Modern Link in Bio Platform with MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "NODE_ENV=production node server.js",
+    "dev": "nodemon server.js",
+    "dev:debug": "nodemon --inspect server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix",
+    "update": "npm update",
+    "outdated": "npm outdated",
+    "security": "npm audit --production",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "clean": "rm -rf node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install",
+    "pm2:start": "pm2 start server.js --name dotme",
+    "pm2:stop": "pm2 stop dotme",
+    "pm2:restart": "pm2 restart dotme",
+    "pm2:logs": "pm2 logs dotme",
+    "pm2:monit": "pm2 monit"
+  },
+  "keywords": [
+    "dotme",
+    "link-in-bio",
+    "mongodb",
+    "mongoose",
+    "pwa",
+    "2fa",
+    "security",
+    "jwt",
+    "csrf-protection"
+  ],
+  "author": "Hazem Mohamed Sobhy",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hazemsobhy/dotme.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hazemsobhy/dotme/issues"
+  },
+  "homepage": "https://github.com/hazemsobhy/dotme#readme",
+  "dependencies": {
+    "@sentry/node": "^8.55.0",
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
+    "csrf-sync": "^4.2.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "file-type": "^21.3.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "4.1",
+    "mongoose": "^9.3.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^8.0.2",
+    "qrcode": "^1.5.4",
+    "sanitize-filename": "^1.6.3",
+    "sanitize-html": "^2.17.1",
+    "sharp": "^0.34.5",
+    "speakeasy": "^2.0.0",
+    "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.21.0",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.2"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "server.js",
+      "db.js",
+      "models/",
+      "admin/",
+      "public/"
+    ],
+    "ignore": [
+      "public/uploads/*",
+      "node_modules/*"
+    ],
+    "ext": "js,json"
+  }
+}

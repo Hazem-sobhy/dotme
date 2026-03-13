@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+        }
+
+        .preview-container {
+            max-width: 380px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preview-container">
+        <!-- Profile Preview (مثال) -->
+        <div class="container" style="opacity: 1;">
+            <div class="top-bar">
+                <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+                <button class="icon-btn"><span class="material-symbols-outlined">share</span></button>
+            </div>
+
+            <div class="cover">
+                <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234CAF50'/%3E%3C/svg%3E">
+            </div>
+
+            <img class="avatar"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23e0e0e0'/%3E%3C/svg%3E">
+
+            <h1>John Doe</h1>
+            <p class="title">Digital Creator</p>
+            <p class="bio">Creating awesome content daily ✨</p>
+
+            <div class="contact-buttons">
+                <a class="circle-btn"><span class="material-symbols-outlined">call</span></a>
+                <a class="circle-btn"><span class="material-symbols-outlined">mail</span></a>
+            </div>
+
+            <button class="save-btn">Save Contact</button>
+
+            <div class="links">
+                <a class="link">
+                    <img src="/icons/instagram.png">
+                    <span>Instagram</span>
+                </a>
+                <a class="link">
+                    <img src="/icons/youtube.png">
+                    <span>YouTube</span>
+                </a>
+                <a class="link">
+                    <img src="/icons/tiktok.png">
+                    <span>TikTok</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'updateTheme') {
+                const theme = event.data.theme;
+
+                // تطبيق الثيم على صفحة المعاينة
+                let styleEl = document.getElementById('preview-theme');
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = 'preview-theme';
+                    document.head.appendChild(styleEl);
+                }
+
+                styleEl.textContent = `
+                    body {
+                        background-color: ${theme.bgColor} !important;
+                        color: ${theme.textColor} !important;
+                        font-family: ${theme.fontFamily} !important;
+                    }
+                    .save-btn {
+                        background: ${theme.primaryColor} !important;
+                        border-radius: ${theme.borderRadius}px !important;
+                    }
+                    .link img {
+                        border-radius: ${theme.borderRadius}px !important;
+                    }
+                    .circle-btn i, .circle-btn span {
+                        color: ${theme.primaryColor} !important;
+                    }
+                    .circle-btn:hover {
+                        background: ${theme.primaryColor} !important;
+                    }
+                `;
+
+                // تطبيق style الأزرار
+                if (theme.buttonStyle === 'pill') {
+                    styleEl.textContent += `
+                        .save-btn, .link img { border-radius: 50px !important; }
+                    `;
+                } else if (theme.buttonStyle === 'square') {
+                    styleEl.textContent += `
+                        .save-btn, .link img { border-radius: 0 !important; }
+                    `;
+                } else if (theme.buttonStyle === 'outline') {
+                    styleEl.textContent += `
+                        .save-btn {
+                            background: transparent !important;
+                            border: 2px solid ${theme.primaryColor} !important;
+                            color: ${theme.primaryColor} !important;
+                        }
+                    `;
+                }
+
+                // تطبيق CSS المخصص
+                if (theme.customCSS) {
+                    styleEl.textContent += theme.customCSS;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

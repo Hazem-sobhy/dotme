@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="">
+    <title>Reset 2FA</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        img {
+            margin-top: 20px;
+            max-width: 250px;
+            border-radius: 8px;
+        }
+
+        #error {
+            color: #ef4444;
+            margin-top: 15px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="box">
+
+        <h2>New QR Code</h2>
+
+        <p>Scan with Google Authenticator</p>
+
+        <img id="qr" alt="QR Code">
+
+        <p id="error"></p>
+
+        <a href="/admin/dashboard.html" class="back-link">← Back to Login</a>
+
+    </div>
+    <script src="/reset-2fa.js"></script>
+</body>
+
+</html>

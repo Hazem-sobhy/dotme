@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+
+    <title>Forgot Password</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #111827;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+        }
+
+        .box {
+            background: #1f2937;
+            padding: clamp(24px, 6vw, 40px);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-size: clamp(20px, 5vw, 28px);
+            margin-bottom: 8px;
+            color: #f9fafb;
+        }
+
+        p {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: clamp(12px, 3vw, 14px);
+            margin: 8px 0 16px 0;
+            border: 1px solid #374151;
+            border-radius: 10px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            /* منع التكبير التلقائي في Safari */
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        input::placeholder {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        button {
+            margin-top: 8px;
+            padding: clamp(12px, 3vw, 14px);
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            background: #6366f1;
+            color: white;
+            font-size: clamp(15px, 4vw, 16px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #msg {
+            margin-top: 20px;
+            font-size: clamp(13px, 3.5vw, 14px);
+            color: #10b981;
+            min-height: 20px;
+            word-break: break-word;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .back-link a {
+            color: #9ca3af;
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            color: #6366f1;
+            text-decoration: underline;
+        }
+
+        /* تحسين للموبيل الصغير */
+        @media (max-width: 360px) {
+            .box {
+                padding: 20px;
+            }
+
+            input,
+            button {
+                padding: 10px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="box">
+
+        <h2>Forgot Password</h2>
+
+        <p>Enter your email to reset password</p>
+
+        <input id="email" type="email" placeholder="Email" autocomplete="email" inputmode="email">
+
+        <button id="sendBtn">
+            Send Reset Link
+        </button>
+
+        <div id="msg"></div>
+
+        <div class="back-link">
+            <a href="/admin/dashboard.html">← Back to Login</a>
+        </div>
+
+    </div>
+
+    <script src="/forgot.js"></script>
+
+</body>
+
+</html>

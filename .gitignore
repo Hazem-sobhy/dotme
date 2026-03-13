@@ -1,0 +1,69 @@
+".env\nnode_modules/\npublic/uploads/" 
+# Secrets
+.env
+.env.local
+.env.production
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Uploads
+public/uploads/
+uploads/
+temp/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pm2/
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+.project
+.classpath
+.settings/
+
+# Runtime
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Build
+dist/
+build/
+*.tgz
+
+# Environment
+.env.vault".env" 

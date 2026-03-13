@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Can't reach OTP</title>
+    <meta name="csrf-token" content="">
+
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #111827;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: #1f2937;
+            padding: 40px;
+            border-radius: 12px;
+            width: 350px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 6px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            background: #6366f1;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="box">
+
+        <h2>Can't reach OTP?</h2>
+
+        <p>Enter your email to generate new QR</p>
+
+        <input id="email" placeholder="Email">
+
+        <button id="sendBtn">Send Email</button>
+
+        <p id="msg"></p>
+
+    </div>
+
+    <script src="/cant-reach-otp.js"></script>
+
+</body>
+
+</html>

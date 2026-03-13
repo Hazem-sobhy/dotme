@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Taplink</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+
+    <!-- ✅ Meta tags للأمان (منع التخزين المؤقت) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- ✅ CSRF token (هيتولد من السيرفر) -->
+    <meta name="csrf-token" content="">
+
+    <!-- ✅ Security headers إضافية -->
+    <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <link rel="stylesheet" href="/admin/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+        integrity="sha256-V15M6R8M2NwBIMBGtHeRf8oPY3RtbqYdGNa6n9zBQlc=" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/admin/admin.js" defer></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #1e1e2f;
+            color: white;
+            padding: 25px;
+        }
+
+        .main {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        input,
+        select,
+        textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .delete {
+            background: #e74c3c;
+        }
+
+        .delete:hover {
+            background: #c0392b;
+        }
+
+        .logout {
+            background: #e74c3c;
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h2>Dashboard</h2>
+            <hr>
+            <button id="openProfileBtn">Open Profile</button>
+            <button id="logoutBtn" class="logout">Logout</button>
+        </div>
+
+        <!-- MAIN -->
+        <div class="main">
+            <!-- LOGIN -->
+            <div id="loginBox" class="card">
+                <h2>Login</h2>
+                <input id="username" placeholder="Username" autocomplete="username">
+                <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+                <button id="loginBtn">Login</button>
+                <div style="margin-top:10px; text-align:center">
+                    <a href="/forgot.html">Forgot password?</a>
+                </div>
+                <div style="margin-top:10px; text-align:center">
+                    <a href="#" id="registerBtn">Create account</a>
+                </div>
+            </div>
+
+            <!-- 2FA -->
+            <div id="twofaSection" class="card" style="display:none">
+                <h2>Two Factor Authentication</h2>
+                <input id="otp" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                <button id="verifyBtn">Verify</button>
+                <button id="backLoginBtn">Back</button>
+                <div style="margin-top:10px; text-align:center">
+                    <a href="/cant-reach-otp.html">Can't reach OTP?</a>
+                </div>
+            </div>
+
+            <!-- REGISTER -->
+            <div id="registerSection" class="card" style="display:none">
+                <h2>Create Account</h2>
+                <input id="regUsername" placeholder="Username" autocomplete="username">
+                <input id="regEmail" placeholder="Email" type="email" autocomplete="email">
+                <input id="regPassword" type="password" placeholder="Password" autocomplete="new-password">
+                <button id="registerSubmitBtn">Register</button>
+                <button id="registerBackBtn">Back</button>
+            </div>
+
+            <!-- PANEL -->
+            <div id="panel" style="display:none">
+                <!-- STATS -->
+                <div class="card">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div id="viewsCount" class="stat-number">0</div>
+                            Views
+                        </div>
+                        <div class="stat-item">
+                            <div id="linksCount" class="stat-number">0</div>
+                            Links
+                        </div>
+                        <div class="stat-item">
+                            <div id="clicksCount" class="stat-number">0</div>
+                            Clicks
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE -->
+                <div class="card">
+                    <h3>Profile Settings</h3>
+                    <input id="profileName" placeholder="Display Name">
+                    <textarea id="bio" placeholder="Bio" rows="3"></textarea>
+                    <input id="career" placeholder="Career">
+                    <input id="phone" placeholder="Phone" type="tel">
+
+                    <label style="display:block; margin-top:10px;">Profile Image</label>
+                    <input type="file" id="profileImage" accept="image/jpeg,image/png,image/gif,image/webp">
+
+                    <label style="display:block; margin-top:10px;">Background Image</label>
+                    <input type="file" id="backgroundImage" accept="image/jpeg,image/png,image/gif,image/webp">
+
+                    <!-- ✅ تم نقل الـ Themes إلى صفحة منفصلة -->
+                    <div style="margin-top: 15px; text-align: center;">
+                        <a href="/admin/themes.html"
+                            style="color: #4CAF50; text-decoration: none; display: inline-block; padding: 10px;">
+                            🎨 Manage Themes →
+                        </a>
+                    </div>
+
+                    <button id="saveProfileBtn" style="margin-top:15px;">Save Profile</button>
+                </div>
+
+                <!-- ADD LINK -->
+                <div class="card">
+                    <h3>Add Link</h3>
+                    <!-- عداد اللينكات -->
+                    <div id="linkCounter"
+                        style="text-align: right; font-size: 12px; margin-bottom: 10px; color: #4CAF50;">
+                        0/23 links used
+                    </div>
+                    <input id="name" placeholder="Platform">
+                    <input id="url" placeholder="URL (https://...)">
+                    <button id="addLinkBtn">Add</button>
+                </div>
+
+                <!-- LINKS -->
+                <div class="card">
+                    <h3>Your Links</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Platform</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="links"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- ✅ Script صغير لتعيين CSRF token من meta tag -->
+    <script nonce="{{nonce}}">
+        (function () {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfMeta) {
+                console.warn('CSRF token meta tag not found');
+            }
+        })();
+    </script>
+</body>
+
+</html>

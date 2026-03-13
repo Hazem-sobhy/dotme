@@ -1,0 +1,21 @@
+{
+  "name": "Taplink Profile",
+  "short_name": "Taplink",
+  "description": "Your personal profile page with all your important links",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

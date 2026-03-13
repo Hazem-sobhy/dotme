@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Profile | Taplink</title>
+
+    <!-- ✅ Meta tags للأمان (منع التخزين المؤقت) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- ✅ Security headers إضافية -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Your personal profile page with all your important links">
+    <meta name="theme-color" content="#4CAF50">
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Preload Critical Resources -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="preload" href="/style.css" as="style">
+    <link rel="preload" href="/script.js" as="script">
+    <!-- أيقونات PWA (مؤقتاً من CDN) -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/565/565547.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/565/565547.png">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/style.css">
+
+    <!-- Font Awesome (مستقر ومضمون) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Material Icons (كبديل احتياطي) -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1">
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/icons/favicon.png">
+    <link rel="apple-touch-icon" href="/icons/apple-icon.png">
+
+    <style>
+        /* Critical CSS for initial render */
+        .container {
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .spinner {
+            display: none;
+        }
+
+        .no-links-message {
+            display: none;
+        }
+
+        /* ✅ تحسين أمان الأزرار */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- ================= TOP BAR ================= -->
+        <div class="top-bar">
+            <button class="icon-btn" id="menuBtn" aria-label="Menu" data-tooltip="Menu">
+                <img src="/icons/interface.png" class="icon-img" alt="menu">
+            </button>
+
+            <button class="icon-btn" id="shareBtn" aria-label="Share" data-tooltip="Share">
+                <img src="/icons/share.png" class="icon-img" alt="share">
+            </button>
+
+            <!-- ADMIN MENU -->
+            <div id="menuDropdown" class="menu-dropdown" role="menu">
+                <a href="/admin/dashboard.html" id="signInLink" role="menuitem">Sign In</a>
+            </div>
+
+            <!-- SHARE MENU -->
+            <div id="shareMenu" class="share-menu" role="menu">
+                <button id="copyLinkBtn" role="menuitem">
+                    <span class="material-symbols-outlined">content_copy</span>
+                    Copy Link
+                </button>
+                <button id="qrBtn" role="menuitem">
+                    <span class="material-symbols-outlined">qr_code_scanner</span>
+                    QR Code
+                </button>
+                <button id="nativeShareBtn" role="menuitem">
+                    <span class="material-symbols-outlined">ios_share</span>
+                    Share
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= COVER ================= -->
+        <div class="cover">
+            <img id="background" alt="Cover image"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234CAF50'/%3E%3C/svg%3E">
+        </div>
+
+        <!-- ================= PROFILE ================= -->
+        <img id="profile" class="avatar" alt="Profile picture"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23e0e0e0'/%3E%3C/svg%3E">
+
+        <h1 id="name">Loading...</h1>
+        <p id="title"></p>
+        <p id="bio" class="bio"></p>
+
+        <!-- ================= CONTACT BUTTONS ================= -->
+        <div class="contact-buttons">
+            <a id="phoneBtn" class="circle-btn" style="display: none;" data-tooltip="Call">
+                <img src="/icons/phone.png" class="icon-img" alt="phone">
+            </a>
+            <a id="emailBtn" class="circle-btn" style="display: none;" data-tooltip="Email">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
+
+        <!-- ================= SAVE CONTACT ================= -->
+        <button id="saveContactBtn" class="save-btn" data-tooltip="Save to contacts">
+            <span class="material-symbols-outlined">download</span>
+            Save Contact
+        </button>
+
+        <!-- ================= LINKS ================= -->
+        <div id="links" class="links"></div>
+    </div>
+
+    <!-- ================= QR MODAL ================= -->
+    <div id="qrModal" class="qr-modal" role="dialog" aria-modal="true" aria-label="QR Code">
+        <div class="qr-content">
+            <img id="qrImage" alt="QR Code">
+            <div class="qr-buttons">
+                <button id="shareQrBtn" class="qr-share">
+                    <span class="material-symbols-outlined">share</span>
+                    Share QR
+                </button>
+                <button id="closeQrBtn" class="qr-close">
+                    <span class="material-symbols-outlined">close</span>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TOAST NOTIFICATION ================= -->
+    <div id="toast" role="alert"></div>
+    <!-- للثيم النيون فقط - عناصر إضافية -->
+    <div class="cyberpunk-lights"></div>
+
+    <!-- ================= SCRIPTS ================= -->
+    <script src="/script.js" defer></script>
+
+    <script nonce="{{nonce}}">
+        // التحقق من تحميل Font Awesome
+        document.addEventListener('DOMContentLoaded', function () {
+            const testIcon = document.createElement('i');
+            testIcon.className = 'fas fa-phone';
+            testIcon.style.position = 'absolute';
+            testIcon.style.opacity = '0';
+            document.body.appendChild(testIcon);
+
+            setTimeout(() => {
+                const style = window.getComputedStyle(testIcon);
+                const fontFamily = style.getPropertyValue('font-family');
+
+                if (!fontFamily.includes('Font Awesome')) {
+                    console.log('Using Material Icons as fallback');
+                }
+                testIcon.remove();
+            }, 100);
+        });
+
+
+    </script>
+</body>
+
+</html>

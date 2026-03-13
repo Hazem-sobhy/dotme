@@ -1,0 +1,96 @@
+-- =========================
+-- Create base tables
+-- =========================
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    password_hash TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100),
+    bio TEXT,
+    career VARCHAR(100),
+    phone VARCHAR(20),
+    image_url TEXT,
+    background_url TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    theme VARCHAR(20) DEFAULT 'dark'
+);
+
+CREATE TABLE links (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(50),
+    url TEXT
+);
+
+CREATE TABLE link_clicks (
+    id SERIAL PRIMARY KEY,
+    link_id INTEGER REFERENCES links(id) ON DELETE CASCADE,
+    ip TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE profile_views (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    ip TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE,
+    expires TIMESTAMP
+);
+
+-- =========================
+-- Alter tables
+-- =========================
+
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS reset_token TEXT,
+ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMP,
+ADD COLUMN IF NOT EXISTS reset_2fa_token TEXT,
+ADD COLUMN IF NOT EXISTS reset_2fa_expires TIMESTAMP,
+ADD COLUMN IF NOT EXISTS twofa_secret TEXT;
+
+
+-- =========================
+-- Complete database setup with audit_logs
+-- =========================
+
+-- Create audit_logs table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL,
+    ip INET,
+    user_agent TEXT,
+    request_id VARCHAR(36),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add missing columns to users
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS last_login TIMESTAMP,
+ADD COLUMN IF NOT EXISTS last_active TIMESTAMP;
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Verify everything
+SELECT '✅ audit_logs table created' as message;
+SELECT '✅ Columns added to users' as message;
+SELECT '✅ Indexes created' as message;

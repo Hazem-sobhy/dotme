@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Password | Taplink</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ✅ Meta tags للأمان (منع التخزين المؤقت) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- ✅ Security headers إضافية -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- ✅ CSRF token -->
+    <meta name="csrf-token" content="">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+
+        /* CARD */
+        .card {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: fade 0.5s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        /* INPUTS */
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        /* BUTTON */
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* BACK LINK */
+        .back {
+            display: block;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .back:hover {
+            color: #4CAF50;
+            text-decoration: underline;
+        }
+
+        /* MESSAGE */
+        #msg {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        /* PASSWORD REQUIREMENTS */
+        .requirements {
+            text-align: left;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            padding-left: 5px;
+        }
+
+        .requirements span {
+            display: block;
+            margin: 3px 0;
+        }
+
+        .requirements .valid {
+            color: #10b981;
+        }
+
+        .requirements .invalid {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Reset Password</h2>
+
+        <input id="pass1" type="password" placeholder="New password" autocomplete="new-password">
+        <input id="pass2" type="password" placeholder="Confirm password" autocomplete="new-password">
+
+        <!-- ✅ متطلبات كلمة السر -->
+        <div class="requirements" id="requirements">
+            <span id="req-length">✗ At least 8 characters</span>
+            <span id="req-uppercase">✗ At least one uppercase letter</span>
+            <span id="req-lowercase">✗ At least one lowercase letter</span>
+            <span id="req-number">✗ At least one number</span>
+        </div>
+
+        <button id="resetBtn">Reset Password</button>
+        <div id="msg"></div>
+        <a class="back" href="/admin/dashboard.html">← Back to Login</a>
+    </div>
+
+    <script src="/reset.js"></script>
+
+    <!-- ✅ Script لفحص متطلبات كلمة السر مباشرة (مع nonce) -->
+    <script nonce="{{nonce}}">
+        (function () {
+            const pass1 = document.getElementById('pass1');
+            const pass2 = document.getElementById('pass2');
+            const reqLength = document.getElementById('req-length');
+            const reqUppercase = document.getElementById('req-uppercase');
+            const reqLowercase = document.getElementById('req-lowercase');
+            const reqNumber = document.getElementById('req-number');
+
+            function checkPassword() {
+                const password = pass1.value;
+
+                // التحقق من الطول
+                if (password.length >= 8) {
+                    reqLength.className = 'valid';
+                    reqLength.innerHTML = '✓ At least 8 characters';
+                } else {
+                    reqLength.className = 'invalid';
+                    reqLength.innerHTML = '✗ At least 8 characters';
+                }
+
+                // التحقق من وجود حرف كبير
+                if (/[A-Z]/.test(password)) {
+                    reqUppercase.className = 'valid';
+                    reqUppercase.innerHTML = '✓ At least one uppercase letter';
+                } else {
+                    reqUppercase.className = 'invalid';
+                    reqUppercase.innerHTML = '✗ At least one uppercase letter';
+                }
+
+                // التحقق من وجود حرف صغير
+                if (/[a-z]/.test(password)) {
+                    reqLowercase.className = 'valid';
+                    reqLowercase.innerHTML = '✓ At least one lowercase letter';
+                } else {
+                    reqLowercase.className = 'invalid';
+                    reqLowercase.innerHTML = '✗ At least one lowercase letter';
+                }
+
+                // التحقق من وجود رقم
+                if (/[0-9]/.test(password)) {
+                    reqNumber.className = 'valid';
+                    reqNumber.innerHTML = '✓ At least one number';
+                } else {
+                    reqNumber.className = 'invalid';
+                    reqNumber.innerHTML = '✗ At least one number';
+                }
+            }
+
+            pass1.addEventListener('input', checkPassword);
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,23 @@
+TAP
+│
+├── admin
+│   ├── dashboard.html
+│   ├── admin.js
+│   └── style.css
+│
+├── public
+│   ├── index.html
+│   ├── script.js
+│   ├── style.css
+│   ├── forgot.html
+│   ├── forgot.js
+│   ├── reset.html
+│   ├── reset.js
+│   ├── cant-reach-otp.html
+│   ├── cant-reach-otp.js
+│   ├── reset-2fa.html
+│   └── reset-2fa.js
+│
+├── uploads
+├── server.js
+├── db.js
