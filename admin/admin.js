@@ -1002,7 +1002,8 @@ async function saveLinkOrder() {
     
     const order = [];
     rows.forEach((row, index) => {
-        const linkId = row.dataset.linkId;
+        // ✅ استخدم getAttribute بدلاً من dataset
+        const linkId = row.getAttribute('data-link-id');
         // تجاهل أي صف لا يحتوي ID
         if (!linkId || linkId === "undefined") return;
         order.push({
@@ -1010,7 +1011,6 @@ async function saveLinkOrder() {
             order: index
         });
     });
-
 
     console.log("Saving order:", order); // للتصحيح
     
