@@ -1120,7 +1120,7 @@ app.post("/api/upload",
         }
 
         // ✅ فحص إضافي: البحث عن scripts داخل الصورة
-        fileBuffer.slice(0,1024).toString()
+        const fileContent = fileBuffer.toString('utf8', 0, Math.min(fileBuffer.length, 1024))
         const suspiciousPatterns = [
             '<?php', '<script', 'javascript:', 'eval(', 'document.cookie',
             '<%', '${', '{{', '<!--', '-->', '<?=', '<!ENTITY',
