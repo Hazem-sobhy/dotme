@@ -1,6 +1,19 @@
-// ✅ دالة لجلب CSRF token من meta tag
+// ✅ دالة لجلب CSRF token من meta tag أو من cookie (كبديل)
 function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+    // حاول تجيب التوكن من meta tag
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (metaToken) return metaToken
+    
+    // لو مش موجود، جرب تجيبه من cookie (كبديل)
+    const cookies = document.cookie.split(';')
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=')
+        if (name === 'csrf-token') return value
+    }
+    
+    // لو لسه مش موجود، استخدم empty string
+    console.warn("CSRF token not found")
+    return ''
 }
 
 const params = new URLSearchParams(window.location.search)
@@ -29,15 +42,22 @@ async function load() {
 
         const data = await res.json()
 
+        if (!res.ok) {
+            throw new Error(data.error || "Failed to reset 2FA")
+        }
+
         if (data.qr) {
             qrEl.src = data.qr
+            qrEl.style.display = 'block'
+            errorEl.innerText = ''
         } else {
             errorEl.innerText = data.error || "Invalid or expired link"
         }
     } catch (e) {
         console.error("Reset 2FA error:", e)
-        errorEl.innerText = "Server error. Please try again later."
+        errorEl.innerText = e.message || "Server error. Please try again later."
     }
 }
 
-load()
+// شغل load لما الصفحة تتحمل
+document.addEventListener('DOMContentLoaded', load)
