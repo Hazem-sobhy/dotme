@@ -1,16 +1,19 @@
 /* ================= LOAD PROFILE ================= */
 
 async function load() {
+
     showLoading()
-    
+
     const username = window.location.pathname.replace("/", "")
 
+    /* الصفحة الرئيسية */
     if (!username) {
         showWelcomeScreen()
         hideLoading()
         return
     }
 
+    /* تجاهل api و admin */
     if (username.startsWith('api/') || username.startsWith('admin/')) {
         hideLoading()
         return
@@ -63,14 +66,15 @@ function renderProfile(data) {
     }
 
     /* ================= PROFILE ================= */
-    const name = data.profile?.name
-    if (!name) {
-        showWelcomeScreen()
-        return
-    }
-    document.getElementById("name").innerText = name
-    document.getElementById("title").innerText = data.profile?.career || ""
-    document.getElementById("bio").innerText = data.profile?.bio || ""
+
+    document.getElementById("name").innerText =
+        data.profile?.name || window.location.pathname.replace("/", "")
+
+    document.getElementById("title").innerText =
+        data.profile?.career || ""
+
+    document.getElementById("bio").innerText =
+        data.profile?.bio || ""
 
     /* ================= PROFILE IMAGE ================= */
     if (data.profile?.image_url) {
