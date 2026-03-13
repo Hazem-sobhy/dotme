@@ -33,6 +33,15 @@ cloudinary.config({
 dns.setDefaultResultOrder('ipv4first')
 
 const app = express()
+app.use(async (req, res, next) => {
+    try {
+        await connectDB()
+        next()
+    } catch (err) {
+        console.error("❌ MongoDB connection failed:", err)
+        res.status(500).json({ error: "Database connection error" })
+    }
+})
 app.set('trust proxy', true)
 app.use((req, res, next) => {
     const forwarded = req.headers['x-forwarded-for']
