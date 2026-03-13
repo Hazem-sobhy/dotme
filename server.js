@@ -55,6 +55,10 @@ app.use((req, res, next) => {
     next()
 })
 
+// في نهاية الـ static files
+app.use("/favicon.ico", express.static(path.join(__dirname, "public/favicon.ico")))
+app.use("/favicon.svg", express.static(path.join(__dirname, "public/favicon.svg")))
+
 
 // ✅ إعدادات البيئة
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'

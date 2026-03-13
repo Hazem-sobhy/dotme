@@ -52,8 +52,11 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/icons/favicon.png">
-    <link rel="apple-touch-icon" href="/icons/apple-icon.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
 
     <style>
         /* Critical CSS for initial render */
@@ -85,6 +88,35 @@
 </head>
 
 <body>
+    <canvas id="welcome-bg"></canvas>
+    <!-- ================= WELCOME SCREEN (Minimal) ================= -->
+    <div id="welcome-screen" class="welcome-screen" style="display: none;">
+        <div class="minimal-card">
+            <!-- Logo -->
+            <div class="minimal-logo">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="24" r="20" stroke="#4CAF50" stroke-width="2" stroke-dasharray="4 4" />
+                    <circle cx="24" cy="24" r="8" fill="#4CAF50" />
+                </svg>
+            </div>
+
+            <!-- Text -->
+            <h1 class="minimal-title">DotMe</h1>
+            <p class="minimal-subtitle">One link for everything you are</p>
+
+            <!-- Buttons -->
+            <div class="minimal-buttons">
+                <a href="/admin/dashboard.html" class="minimal-btn-primary">
+                    Create your page
+                </a>
+            </div>
+
+            <!-- Footer -->
+            <p class="minimal-footer">
+                Free • Customizable • No ads
+            </p>
+        </div>
+    </div>
     <div class="container">
         <!-- ================= TOP BAR ================= -->
         <div class="top-bar">

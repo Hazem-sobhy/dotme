@@ -5,7 +5,13 @@ async function load() {
     
     const username = window.location.pathname.replace("/", "")
 
-    if (!username || username.startsWith('api/') || username.startsWith('admin/')) {
+    if (!username) {
+        showWelcomeScreen()
+        hideLoading()
+        return
+    }
+
+    if (username.startsWith('api/') || username.startsWith('admin/')) {
         hideLoading()
         return
     }
@@ -57,7 +63,12 @@ function renderProfile(data) {
     }
 
     /* ================= PROFILE ================= */
-    document.getElementById("name").innerText = data.profile?.name || ""
+    const name = data.profile?.name
+    if (!name) {
+        showWelcomeScreen()
+        return
+    }
+    document.getElementById("name").innerText = name
     document.getElementById("title").innerText = data.profile?.career || ""
     document.getElementById("bio").innerText = data.profile?.bio || ""
 
@@ -96,7 +107,10 @@ function renderProfile(data) {
     const container = document.getElementById("links")
     container.innerHTML = ""
 
-    if (data.links.length === 0) {
+    if (!data.profile?.name && data.links.length === 0) {
+        showWelcomeScreen()
+    } 
+    else if (data.links.length === 0) {
         showEmptyState()
     } else {
         data.links.forEach(link => {
@@ -126,6 +140,56 @@ function renderProfile(data) {
     initTooltips()
     prefetchLinks()
 }
+
+/* ================= WELCOME SCREEN (Check if logged in) ================= */
+function showWelcomeScreen() {
+    const container = document.querySelector(".container")
+    const welcomeScreen = document.getElementById("welcome-screen")
+    
+    if (welcomeScreen) {
+        container.style.display = "none"
+        welcomeScreen.style.display = "flex"
+    } else {
+        container.innerHTML = `
+        <div class="welcome-screen" id="welcome-screen">
+            <div class="minimal-card">
+                <div class="minimal-logo">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="20" stroke="#4CAF50" stroke-width="2" stroke-dasharray="4 4"/>
+                        <circle cx="24" cy="24" r="8" fill="#4CAF50"/>
+                    </svg>
+                </div>
+
+                <h1 class="minimal-title">DotMe</h1>
+                <p class="minimal-subtitle">One link for everything you are</p>
+
+                <div class="minimal-buttons">
+                    <a href="/admin/dashboard.html" class="minimal-btn-primary">
+                        Create your page
+                    </a>
+                    <a href="/admin/dashboard.html" class="minimal-btn-secondary">
+                        Sign in
+                    </a>
+                </div>
+
+                <p class="minimal-footer">
+                    Free • Customizable • No ads
+                </p>
+            </div>
+        </div>
+        `
+    }
+}
+
+// Check if user is logged in (example)
+document.addEventListener("DOMContentLoaded", () => {
+    // Replace with actual auth check
+    const isLoggedIn = false
+    
+    if (!isLoggedIn) {
+        showWelcomeScreen()
+    }
+})
 
 /* ================= APPLY CUSTOMIZATIONS ================= */
 
