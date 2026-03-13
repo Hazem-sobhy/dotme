@@ -1005,7 +1005,7 @@ async function saveLinkOrder() {
         const linkId = row.getAttribute('data-link-id');
         if (linkId) {
             order.push({
-                id: parseInt(linkId),
+                id: linkId,
                 order: index
             });
         }
