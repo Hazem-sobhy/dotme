@@ -33,17 +33,19 @@ cloudinary.config({
 dns.setDefaultResultOrder('ipv4first')
 
 const app = express()
-app.set('trust proxy', 1)
+app.set('trust proxy', true)
+app.use((req, res, next) => {
+    const forwarded = req.headers['x-forwarded-for']
 
-app.use(async (req, res, next) => {
-    try {
-        await connectDB()
-        next()
-    } catch (err) {
-        console.error("Database connection failed:", err)
-        res.status(500).json({ error: "Database connection error" })
+    if (forwarded) {
+        req.realIp = forwarded.split(',')[0].trim()
+    } else {
+        req.realIp = req.ip
     }
+
+    next()
 })
+
 
 // ✅ إعدادات البيئة
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
@@ -60,8 +62,7 @@ if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== 'your-sentry-dsn') {
 
 // التحقق من المتغيرات البيئية الأساسية
 if (!JWT_SECRET) {
-    console.error("❌ JWT_SECRET is not defined in .env file")
-    throw error
+    throw new Error("JWT_SECRET is missing in .env")
 }
 
 // ✅ الاتصال بـ MongoDB
@@ -96,80 +97,183 @@ async function connectDB() {
 
 /* ================= تعريف MongoDB Models ================= */
 
+/* ================= MongoDB Models ================= */
+
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    googleId: { type: String, unique: true, sparse: true },
+    username: { type: String, required: true, unique: true, index: true },
+    email: { type: String, required: true, unique: true, index: true },
+    googleId: { type: String, unique: true, sparse: true, index: true },
+
     password_hash: { type: String },
     twofa_secret: String,
+
     refresh_token: String,
     refresh_token_version: { type: Number, default: 0 },
+
     reset_token: String,
     reset_expires: Date,
+
     reset_2fa_token: String,
     reset_2fa_expires: Date,
+
     locked_until: Date,
     last_login: Date,
     last_active: Date
+
 }, { timestamps: true }))
 
 
+/* ================= PROFILE ================= */
+
 const Profile = mongoose.models.Profile || mongoose.model('Profile', new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        unique: true,
+        index: true
+    },
+
     name: String,
     bio: String,
     career: String,
     phone: String,
     email: String,
     contact_email: String,
+
     image_url: String,
     background_url: String,
+
     theme: { type: String, default: 'dark' },
     custom_theme: { type: mongoose.Schema.Types.Mixed }
+
 }, { timestamps: true }))
 
+
+/* ================= LINKS ================= */
 
 const Link = mongoose.models.Link || mongoose.model('Link', new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+
     name: { type: String, required: true },
+
     url: { type: String, required: true },
+
     sort_order: { type: Number, default: 0 }
+
 }, { timestamps: true }))
 
+// compound index لتحسين ترتيب الروابط
+Link.schema.index({ user_id: 1, sort_order: 1 })
+
+
+/* ================= LINK CLICKS ================= */
 
 const LinkClick = mongoose.models.LinkClick || mongoose.model('LinkClick', new mongoose.Schema({
-    link_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Link', required: true },
-    clicked_at: { type: Date, default: Date.now }
+
+    link_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Link',
+        required: true,
+        index: true
+    },
+
+    clicked_at: {
+        type: Date,
+        default: Date.now,
+        index: true
+    }
+
 }))
 
+// index مهم للـ analytics
+LinkClick.schema.index({ link_id: 1, clicked_at: -1 })
+
+
+/* ================= PROFILE VIEWS ================= */
 
 const ProfileView = mongoose.models.ProfileView || mongoose.model('ProfileView', new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+
     ip: String,
-    viewed_at: { type: Date, default: Date.now }
+
+    viewed_at: {
+        type: Date,
+        default: Date.now,
+        index: true
+    }
+
 }))
 
+// index للـ dashboard analytics
+ProfileView.schema.index({ user_id: 1, viewed_at: -1 })
+
+
+/* ================= AUDIT LOG ================= */
 
 const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    action: String,
+
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        index: true
+    },
+
+    action: { type: String, index: true },
+
     ip: String,
+
     user_agent: String,
-    request_id: String
+
+    request_id: { type: String, index: true }
+
 }, { timestamps: { createdAt: 'created_at' } }))
 
+// index للبحث السريع في logs
+AuditLog.schema.index({ user_id: 1, created_at: -1 })
+
+
+/* ================= BLACKLISTED TOKENS ================= */
 
 const BlacklistedToken = mongoose.models.BlacklistedToken || mongoose.model('BlacklistedToken', new mongoose.Schema({
-    token: { type: String, required: true, unique: true },
-    expires_at: { type: Date, required: true }
+
+    token: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true
+    },
+
+    expires_at: {
+        type: Date,
+        required: true
+    }
+
 }))
 
+BlacklistedToken.schema.index(
+    { expires_at: 1 },
+    { expireAfterSeconds: 0 }
+)
 /* ================= REQUEST ID MIDDLEWARE ================= */
 app.use((req, res, next) => {
     const requestId = randomUUID()
     req.requestId = requestId
     res.setHeader("X-Request-ID", requestId)
-    // console.log(`📥 [${requestId}] ${req.method} ${req.url} - ${req.ip}`)
+    // console.log(`📥 [${requestId}] ${req.method} ${req.url} - ${req.realIp}`)
     next()
 })
 
@@ -215,28 +319,28 @@ const loginLimiter = rateLimit({
     max: 5,
     skipSuccessfulRequests: true,
     message: { error: "Too many login attempts. Please try again after 15 minutes." },
-    keyGenerator: (req) => req.ip || req.connection.remoteAddress || 'unknown'
+    keyGenerator: (req) => req.realIp || req.connection.remoteAddress || 'unknown'
 })
 
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 5,
     message: { error: "Too many registration attempts from this IP. Please try again later." },
-    keyGenerator: (req) => req.ip || req.connection.remoteAddress || 'unknown'
+    keyGenerator: (req) => req.realIp || req.connection.remoteAddress || 'unknown'
 })
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: { error: "Too many requests. Please slow down." },
-    keyGenerator: (req) => req.ip || req.connection.remoteAddress || 'unknown'
+    keyGenerator: (req) => req.realIp || req.connection.remoteAddress || 'unknown'
 })
 
 const emailLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 3,
     message: { error: "Too many email requests. Please try again later." },
-    keyGenerator: (req) => req.ip || req.connection.remoteAddress || 'unknown'
+    keyGenerator: (req) => req.realIp || req.connection.remoteAddress || 'unknown'
 })
 
 /* ================= FILE UPLOAD ================= */
@@ -268,7 +372,7 @@ const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { error: "Too many upload attempts. Please try again later." },
-    keyGenerator: (req) => req.user?.id ? `user_${req.user.id}` : (req.ip || 'unknown'),
+    keyGenerator: (req) => req.user?.id ? `user_${req.user.id}` : (req.realIp || 'unknown'),
     skipSuccessfulRequests: true,
     standardHeaders: true,
     legacyHeaders: false
@@ -305,7 +409,7 @@ app.use(
 )
 
 app.use("/api", apiLimiter)
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 app.use((req, res, next) => {
@@ -360,7 +464,7 @@ function createFingerprint(req) {
         req.headers['user-agent'] || '',
         req.headers['accept-language'] || '',
         req.headers['sec-ch-ua'] || '',
-        req.ip || ''
+        req.realIp || ''
     ].join('|')
     return crypto.createHash('sha256').update(data).digest('hex')
 }
@@ -402,7 +506,7 @@ async function detectAttack(req, userId) {
         const attempts = await AuditLog.countDocuments({ user_id: userId, action: 'LOGIN_FAILED', created_at: { $gt: fiveMinsAgo } })
         if (attempts > 10) {
             await User.findByIdAndUpdate(userId, { locked_until: new Date(Date.now() + 60 * 60 * 1000) })
-            if (Sentry) Sentry.captureMessage(`🚨 Brute force attack detected on user ${userId} from IP ${req.ip}`)
+            if (Sentry) Sentry.captureMessage(`🚨 Brute force attack detected on user ${userId} from IP ${req.realIp}`)
         }
     } catch (error) {
         console.error("Attack detection error:", error)
@@ -414,7 +518,7 @@ async function createAuditLog(userId, action, req) {
         await AuditLog.create({
             user_id: userId,
             action,
-            ip: req.ip || req.connection.remoteAddress,
+            ip: req.realIp || req.connection.remoteAddress,
             user_agent: req.get('User-Agent'),
             request_id: req.requestId
         })
@@ -1003,7 +1107,7 @@ app.post("/api/upload",
         }
 
         // ✅ فحص إضافي: البحث عن scripts داخل الصورة
-        const fileContent = fileBuffer.toString('utf8', 0, Math.min(fileBuffer.length, 1024))
+        fileBuffer.slice(0,1024).toString()
         const suspiciousPatterns = [
             '<?php', '<script', 'javascript:', 'eval(', 'document.cookie',
             '<%', '${', '{{', '<!--', '-->', '<?=', '<!ENTITY',
@@ -1079,7 +1183,7 @@ app.get("/api/profile/:username", async (req, res) => {
         if (!isAdminRequest) {
             await ProfileView.create({
                 user_id: userId,
-                ip: req.ip || req.connection.remoteAddress
+                ip: req.realIp || req.connection.remoteAddress
             })
         }
 
@@ -1710,10 +1814,19 @@ app.get("/api/dashboard", auth, async (req, res) => {
     try {
         const userId = req.user.id
 
+        // جلب IDs الروابط فقط
+        const links = await Link.find({ user_id: userId })
+            .select('_id')
+            .lean()
+
+        const linkIds = links.map(l => l._id)
+
         const [viewsCount, linksCount, clicksCount] = await Promise.all([
             ProfileView.countDocuments({ user_id: userId }),
             Link.countDocuments({ user_id: userId }),
-            LinkClick.countDocuments({ link_id: { $in: (await Link.find({ user_id: userId }).select('_id')).map(l => l._id) } })
+            linkIds.length > 0
+                ? LinkClick.countDocuments({ link_id: { $in: linkIds } })
+                : 0
         ])
 
         res.json({
@@ -1834,32 +1947,52 @@ app.use((err, req, res, next) => {
 })
 
 /* ================= SERVER ================= */
+
 if (require.main === module) {
-    const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log("\n" + "=".repeat(60))
-        console.log("🚀 DotMe Server (MongoDB Edition)")
-        console.log("=".repeat(60))
-        console.log(`📡 Port: ${PORT}`)
-        console.log(`🌍 URL: http://localhost:${PORT}`)
-        console.log(`🌍 Network: http://${getLocalIP()}:${PORT}`)
-        console.log("=".repeat(60) + "\n")
-    })
+
+    connectDB()
+        .then(() => {
+
+            const server = app.listen(PORT, '0.0.0.0', () => {
+                console.log("\n" + "=".repeat(60))
+                console.log("🚀 DotMe Server (MongoDB Edition)")
+                console.log("=".repeat(60))
+                console.log(`📡 Port: ${PORT}`)
+                console.log(`🌍 URL: http://localhost:${PORT}`)
+                console.log(`🌍 Network: http://${getLocalIP()}:${PORT}`)
+                console.log("=".repeat(60) + "\n")
+            })
+
+            // Graceful shutdown
+            process.on('SIGTERM', () => {
+                console.log('SIGTERM signal received: closing HTTP server')
+                server.close(async () => {
+                    await mongoose.connection.close()
+                    console.log("MongoDB connection closed")
+                    process.exit(0)
+                })
+            })
+
+        })
+        .catch((err) => {
+            console.error("❌ Failed to connect to MongoDB:", err)
+            process.exit(1)
+        })
+
 }
 
 function getLocalIP() {
     const nets = require('os').networkInterfaces()
+
     for (const name of Object.keys(nets)) {
         for (const net of nets[name]) {
-            if (net.family === 'IPv4' && !net.internal) return net.address
+            if (net.family === 'IPv4' && !net.internal) {
+                return net.address
+            }
         }
     }
-    return '192.168.1.10'
-}
 
-process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server')
-    mongoose.connection.close()
-    process.exit(0)
-})
+    return '127.0.0.1'
+}
 
 module.exports = app
