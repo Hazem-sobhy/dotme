@@ -48,14 +48,32 @@ if (!JWT_SECRET) {
 }
 
 // ✅ الاتصال بـ MongoDB
-const connectDB = async () => {
+let cached = global.mongoose
+
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null }
+}
+
+async function connectDB() {
+
+    if (cached.conn) {
+        return cached.conn
+    }
+
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(process.env.MONGODB_URI, {
+            bufferCommands: false
+        })
+    }
+
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI)
-        console.log(`✅ MongoDB Connected: ${conn.connection.host}`)
-        console.log(`📦 Database: ${conn.connection.name}`)
-    } catch (error) {
-        console.error("❌ MongoDB connection error:", error)
-        process.exit(1)
+        cached.conn = await cached.promise
+        console.log("✅ MongoDB connected")
+        return cached.conn
+    } catch (e) {
+        cached.promise = null
+        console.error("❌ MongoDB connection error:", e)
+        throw e
     }
 }
 connectDB()
