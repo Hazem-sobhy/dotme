@@ -1529,59 +1529,53 @@ app.get("/api/profile/:username/theme", async (req, res) => {
     }
 });
 
-// ================= DRAG & DROP ENDPOINT =================
 app.post("/api/links/reorder", auth, async (req, res) => {
     try {
         const { order } = req.body;
-        
+
         console.log("Received order:", order);
-        
-        // ✅ التحقق من صحة البيانات
+
         if (!order || !Array.isArray(order)) {
             return res.status(400).json({ error: "Invalid order data" });
         }
-        
-        // ✅ لو البيانات عبارة عن أ IDs بس (مثل: ["id1", "id2", "id3"])
-        if (typeof order[0] === 'string' || typeof order[0] === 'number') {
-            // تحديث الترتيب بناءً على الـ index
-            for (let i = 0; i < order.length; i++) {
-                const linkId = order[i];
-                const link = await Link.findOne({ _id: linkId, user_id: req.user.id });
-                
-                if (!link) {
-                    throw new Error(`Link ${linkId} not found or unauthorized`);
+
+        let operations = [];
+
+        // case 1: ["id1","id2","id3"]
+        if (typeof order[0] === "string") {
+
+            operations = order.map((id, index) => ({
+                updateOne: {
+                    filter: { _id: id, user_id: req.user.id },
+                    update: { $set: { sort_order: index } }
                 }
-                
-                link.sort_order = i;
-                await link.save();
-            }
-        } 
-        // ✅ لو البيانات عبارة عن array of objects (مثل: [{id: "id1", order: 0}, ...])
-        else if (typeof order[0] === 'object') {
-            for (const item of order) {
-                if (!item.id || typeof item.order !== 'number') {
-                    throw new Error("Invalid order item");
-                }
-                
-                const link = await Link.findOne({ _id: item.id, user_id: req.user.id });
-                
-                if (!link) {
-                    throw new Error(`Link ${item.id} not found or unauthorized`);
-                }
-                
-                link.sort_order = item.order;
-                await link.save();
-            }
-        } else {
-            throw new Error("Invalid order format");
+            }));
+
         }
-        
-        await createAuditLog(req.user.id, 'LINKS_REORDERED', req);
-        res.json({ success: true, message: "Links reordered successfully" });
-        
+
+        // case 2: [{id:"...", order:0}]
+        else if (typeof order[0] === "object") {
+
+            operations = order.map(item => ({
+                updateOne: {
+                    filter: { _id: item.id, user_id: req.user.id },
+                    update: { $set: { sort_order: item.order } }
+                }
+            }));
+
+        } else {
+            return res.status(400).json({ error: "Invalid order format" });
+        }
+
+        await Link.bulkWrite(operations);
+
+        await createAuditLog(req.user.id, "LINKS_REORDERED", req);
+
+        res.json({ success: true });
+
     } catch (error) {
         console.error("Reorder error:", error);
-        res.status(500).json({ error: error.message || "Failed to reorder links" });
+        res.status(500).json({ error: "Failed to reorder links" });
     }
 });
 
