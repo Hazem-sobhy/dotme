@@ -15,7 +15,7 @@ const path = require("path")
 const dns = require('dns')
 const fs = require('fs')
 const cookieParser = require('cookie-parser')
-const { fileTypeFromBuffer } = require('file-type')
+const FileType = require('file-type')
 const sanitize = require('sanitize-filename')
 const Sentry = require('@sentry/node')
 const sanitizeHtml = require('sanitize-html')
@@ -764,7 +764,7 @@ app.post("/api/upload",
         const fileBuffer = await fs.promises.readFile(req.file.path)
         
         // 1️⃣ التحقق باستخدام file-type
-        const type = await fileTypeFromBuffer(fileBuffer)
+        const type = await FileType.fromBuffer(fileBuffer)
         
         // 2️⃣ التحقق باستخدام magic numbers يدوياً
         const magicNumbers = {
