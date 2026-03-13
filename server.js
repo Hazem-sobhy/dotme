@@ -44,7 +44,7 @@ if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== 'your-sentry-dsn') {
 // التحقق من المتغيرات البيئية الأساسية
 if (!JWT_SECRET) {
     console.error("❌ JWT_SECRET is not defined in .env file")
-    process.exit(1)
+    throw error
 }
 
 // ✅ الاتصال بـ MongoDB
