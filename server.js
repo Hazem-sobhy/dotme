@@ -79,7 +79,8 @@ async function connectDB() {
 connectDB()
 
 /* ================= تعريف MongoDB Models ================= */
-const User = mongoose.model('User', new mongoose.Schema({
+
+const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password_hash: { type: String, required: true },
@@ -95,7 +96,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     last_active: Date
 }, { timestamps: true }))
 
-const Profile = mongoose.model('Profile', new mongoose.Schema({
+
+const Profile = mongoose.models.Profile || mongoose.model('Profile', new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     name: String,
     bio: String,
@@ -109,25 +111,29 @@ const Profile = mongoose.model('Profile', new mongoose.Schema({
     custom_theme: { type: mongoose.Schema.Types.Mixed }
 }, { timestamps: true }))
 
-const Link = mongoose.model('Link', new mongoose.Schema({
+
+const Link = mongoose.models.Link || mongoose.model('Link', new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     url: { type: String, required: true },
     sort_order: { type: Number, default: 0 }
 }, { timestamps: true }))
 
-const LinkClick = mongoose.model('LinkClick', new mongoose.Schema({
+
+const LinkClick = mongoose.models.LinkClick || mongoose.model('LinkClick', new mongoose.Schema({
     link_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Link', required: true },
     clicked_at: { type: Date, default: Date.now }
 }))
 
-const ProfileView = mongoose.model('ProfileView', new mongoose.Schema({
+
+const ProfileView = mongoose.models.ProfileView || mongoose.model('ProfileView', new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     ip: String,
     viewed_at: { type: Date, default: Date.now }
 }))
 
-const AuditLog = mongoose.model('AuditLog', new mongoose.Schema({
+
+const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     action: String,
     ip: String,
@@ -135,7 +141,8 @@ const AuditLog = mongoose.model('AuditLog', new mongoose.Schema({
     request_id: String
 }, { timestamps: { createdAt: 'created_at' } }))
 
-const BlacklistedToken = mongoose.model('BlacklistedToken', new mongoose.Schema({
+
+const BlacklistedToken = mongoose.models.BlacklistedToken || mongoose.model('BlacklistedToken', new mongoose.Schema({
     token: { type: String, required: true, unique: true },
     expires_at: { type: Date, required: true }
 }))
