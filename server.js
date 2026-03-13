@@ -1201,7 +1201,7 @@ app.get("/api/profile/:username", async (req, res) => {
         }
 
         const profile = await Profile.findOne({ user_id: userId })
-        const links = await Link.find({ user_id: userId }).sort({ position: 1 })
+        const links = await Link.find({ user_id: userId }).sort({ sort_order: 1 })
 
         res.json({
             profile: profile || {},
@@ -1218,7 +1218,7 @@ app.get("/api/profile/:username", async (req, res) => {
 app.get("/api/admin/profile", auth, async (req, res) => {
     try {
         const profile = await Profile.findOne({ user_id: req.user.id })
-        const links = await Link.find({ user_id: req.user.id }).sort({ position: 1 })
+        const links = await Link.find({ user_id: req.user.id }).sort({ sort_order: 1 })
         const user = await User.findById(req.user.id)
 
         res.json({
@@ -1233,6 +1233,33 @@ app.get("/api/admin/profile", auth, async (req, res) => {
         res.status(500).json({ error: "Server error" })
     }
 })
+
+app.post("/api/links/reorder", auth, async (req, res) => {
+    try {
+
+        const { order } = req.body
+
+        if (!Array.isArray(order)) {
+            return res.status(400).json({ error: "Invalid order format" })
+        }
+
+        for (let i = 0; i < order.length; i++) {
+
+            await Link.updateOne(
+                { _id: order[i], user_id: req.user.id },
+                { sort_order: i }
+            )
+
+        }
+
+        res.json({ success: true })
+
+    } catch (err) {
+        console.error("Reorder error:", err)
+        res.status(500).json({ error: "Failed to reorder links" })
+    }
+})
+
 
 /* ================= UPDATE PROFILE ================= */
 app.put("/api/profile", auth, async (req, res) => {
