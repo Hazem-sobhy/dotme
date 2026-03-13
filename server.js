@@ -224,7 +224,7 @@ const emailLimiter = rateLimit({
 /* ================= FILE UPLOAD ================= */
 
 const storage = multer.diskStorage({
-    destination: uploadDir,
+    destination: "/tmp",
     filename: (req, file, cb) => {
         const safeName = sanitize(file.originalname)
         const unique = Date.now() + "-" + Math.round(Math.random() * 1e9)
@@ -241,9 +241,8 @@ const fileFilter = (req, file, cb) => {
     cb(new Error("Only image files are allowed (jpeg, jpg, png, gif, webp)"))
 }
 
-const upload = multer({ 
+const upload = multer({
     storage,
-    fileFilter,
     limits: { fileSize: 5 * 1024 * 1024, files: 1 }
 })
 
