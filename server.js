@@ -21,6 +21,13 @@ const Sentry = require('@sentry/node')
 const sanitizeHtml = require('sanitize-html')
 const sharp = require('sharp')
 const mongoose = require('mongoose')
+const cloudinary = require("cloudinary").v2
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET
+})
 
 // Force IPv4
 dns.setDefaultResultOrder('ipv4first')
@@ -855,9 +862,17 @@ app.post("/api/upload",
             return res.status(400).json({ error: "Invalid filename pattern" })
         }
 
-        const url = "/uploads/" + req.file.filename
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: "dotme",
+            resource_type: "image"
+        })
+
+        await fs.promises.unlink(req.file.path)
+
+        const url = result.secure_url
+
         await createAuditLog(req.user.id, 'FILE_UPLOAD', req)
-        
+
         console.log("✅ Upload successful:", url)
         console.log("📊 File details:", {
             size: req.file.size,
@@ -865,7 +880,7 @@ app.post("/api/upload",
             extension: fileExt,
             validatedBy: "file-type + magic + sharp"
         })
-        
+
         res.json({ url })
         
     } catch (error) {
