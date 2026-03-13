@@ -1002,17 +1002,32 @@ async function saveLinkOrder() {
     
     const order = [];
     rows.forEach((row, index) => {
-        // ✅ استخدم getAttribute بدلاً من dataset
         const linkId = row.getAttribute('data-link-id');
-        // تجاهل أي صف لا يحتوي ID
-        if (!linkId || linkId === "undefined") return;
-        order.push({
-            id: linkId,
-            order: index
-        });
+        if (linkId) {
+            order.push({
+                id: parseInt(linkId),
+                order: index
+            });
+        }
     });
 
-    console.log("Saving order:", order); // للتصحيح
+    async function saveOrder() {
+    const rows = document.querySelectorAll("#links tr")
+    const order = []
+
+    rows.forEach(row => {
+        order.push(row.dataset.id)
+    })
+
+    console.log("Saving order:", order)
+
+    await api("/api/links/reorder", {
+        method: "POST",
+        body: JSON.stringify({ order })
+    })
+}
+    
+    //console.log("Saving order:", order); // للتصحيح
     
     try {
         const res = await api("/api/links/reorder", {
