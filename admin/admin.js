@@ -1019,8 +1019,9 @@ async function loadLinks() {
 
         sortedLinks.forEach(link => {
             const tr = document.createElement("tr");
-            tr.setAttribute('data-link-id', link.id);
-            tr.setAttribute('data-sort-order', link.sort_order || 0);
+            
+            // ✅ استخدم link._id بدلاً من link.id
+            tr.setAttribute('data-link-id', link._id);
             
             // عمود السحب
             const tdDrag = document.createElement("td");
@@ -1039,7 +1040,8 @@ async function loadLinks() {
             const deleteBtn = document.createElement("button");
             deleteBtn.textContent = "Delete";
             deleteBtn.className = "delete";
-            deleteBtn.addEventListener("click", () => deleteLink(link.id));
+            // ✅ استخدم link._id هنا أيضاً
+            deleteBtn.addEventListener("click", () => deleteLink(link._id));
             
             tdAction.appendChild(deleteBtn);
             tr.appendChild(tdDrag);
