@@ -1,6 +1,4 @@
 require("dotenv").config()
-const connectDB = require('./db');
-connectDB();
 const express = require("express")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
@@ -14,8 +12,6 @@ const crypto = require("crypto")
 const { randomUUID } = require("crypto")
 const multer = require("multer")
 const path = require("path")
-const { Pool } = require("pg")
-const pool = require("./db")
 const dns = require('dns')
 const fs = require('fs')
 const cookieParser = require('cookie-parser')
@@ -23,8 +19,8 @@ const { fileTypeFromBuffer } = require('file-type')
 const sanitize = require('sanitize-filename')
 const Sentry = require('@sentry/node')
 const sanitizeHtml = require('sanitize-html')
-const sharp = require('sharp') // ✅ إضافة sharp للتحقق من الصور
-
+const sharp = require('sharp')
+const mongoose = require('mongoose')
 
 // Force IPv4
 dns.setDefaultResultOrder('ipv4first')
@@ -51,12 +47,87 @@ if (!JWT_SECRET) {
     process.exit(1)
 }
 
+// ✅ الاتصال بـ MongoDB
+const connectDB = async () => {
+    try {
+        const conn = await mongoose.connect(process.env.MONGODB_URI)
+        console.log(`✅ MongoDB Connected: ${conn.connection.host}`)
+        console.log(`📦 Database: ${conn.connection.name}`)
+    } catch (error) {
+        console.error("❌ MongoDB connection error:", error)
+        process.exit(1)
+    }
+}
+connectDB()
+
+/* ================= تعريف MongoDB Models ================= */
+const User = mongoose.model('User', new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password_hash: { type: String, required: true },
+    twofa_secret: String,
+    refresh_token: String,
+    refresh_token_version: { type: Number, default: 0 },
+    reset_token: String,
+    reset_expires: Date,
+    reset_2fa_token: String,
+    reset_2fa_expires: Date,
+    locked_until: Date,
+    last_login: Date,
+    last_active: Date
+}, { timestamps: true }))
+
+const Profile = mongoose.model('Profile', new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    name: String,
+    bio: String,
+    career: String,
+    phone: String,
+    email: String,
+    contact_email: String,
+    image_url: String,
+    background_url: String,
+    theme: { type: String, default: 'dark' },
+    custom_theme: { type: mongoose.Schema.Types.Mixed }
+}, { timestamps: true }))
+
+const Link = mongoose.model('Link', new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+    sort_order: { type: Number, default: 0 }
+}, { timestamps: true }))
+
+const LinkClick = mongoose.model('LinkClick', new mongoose.Schema({
+    link_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Link', required: true },
+    clicked_at: { type: Date, default: Date.now }
+}))
+
+const ProfileView = mongoose.model('ProfileView', new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    ip: String,
+    viewed_at: { type: Date, default: Date.now }
+}))
+
+const AuditLog = mongoose.model('AuditLog', new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    action: String,
+    ip: String,
+    user_agent: String,
+    request_id: String
+}, { timestamps: { createdAt: 'created_at' } }))
+
+const BlacklistedToken = mongoose.model('BlacklistedToken', new mongoose.Schema({
+    token: { type: String, required: true, unique: true },
+    expires_at: { type: Date, required: true }
+}))
+
 /* ================= REQUEST ID MIDDLEWARE ================= */
 app.use((req, res, next) => {
     const requestId = randomUUID()
     req.requestId = requestId
     res.setHeader("X-Request-ID", requestId)
-    //console.log(`📥 [${requestId}] ${req.method} ${req.url} - ${req.ip}`)
+    // console.log(`📥 [${requestId}] ${req.method} ${req.url} - ${req.ip}`)
     next()
 })
 
@@ -87,17 +158,12 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    tls: {
-        rejectUnauthorized: false
-    }
+    tls: { rejectUnauthorized: false }
 })
 
 transporter.verify((err, success) => {
-    if (err) {
-        console.log("❌ SMTP ERROR:", err.message)
-    } else {
-        console.log("✅ SMTP ready to send emails from:", process.env.EMAIL_USER)
-    }
+    if (err) console.log("❌ SMTP ERROR:", err.message)
+    else console.log("✅ SMTP ready to send emails from:", process.env.EMAIL_USER)
 })
 
 /* ================= RATE LIMITERS ================= */
@@ -153,35 +219,27 @@ const fileFilter = (req, file, cb) => {
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
     const mimetype = allowedTypes.test(file.mimetype)
 
-    if (mimetype && extname) {
-        return cb(null, true)
-    }
+    if (mimetype && extname) return cb(null, true)
     cb(new Error("Only image files are allowed (jpeg, jpg, png, gif, webp)"))
 }
 
 const upload = multer({ 
     storage,
     fileFilter,
-    limits: { 
-        fileSize: 5 * 1024 * 1024,
-        files: 1
-    }
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 }
 })
 
-/* ================= UPLOAD RATE LIMITER ================= */
 const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { error: "Too many upload attempts. Please try again later." },
-    keyGenerator: (req) => {
-        return req.user?.id ? `user_${req.user.id}` : (req.ip || req.connection.remoteAddress || 'unknown')
-    },
+    keyGenerator: (req) => req.user?.id ? `user_${req.user.id}` : (req.ip || 'unknown'),
     skipSuccessfulRequests: true,
     standardHeaders: true,
     legacyHeaders: false
 })
 
-/* ================= SECURITY MIDDLEWARE (Helmet + CSP مع nonce) ================= */
+/* ================= SECURITY MIDDLEWARE ================= */
 app.disable("x-powered-by")
 
 app.use(
@@ -207,11 +265,7 @@ app.use(
                 "frame-ancestors": ["'none'"]
             }
         },
-        hsts: {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true
-        }
+        hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }
     })
 )
 
@@ -230,23 +284,10 @@ app.use((req, res, next) => {
 app.get("/admin/dashboard.html", (req, res) => {
     const filePath = path.join(__dirname, 'admin/dashboard.html')
     fs.readFile(filePath, 'utf8', (err, html) => {
-        if (err) {
-            console.error("Error reading dashboard.html:", err)
-            return res.status(500).send('Error loading page')
-        }
-        
+        if (err) return res.status(500).send('Error loading page')
         const nonce = res.locals.nonce || ''
-        
-        let modifiedHtml = html.replace(
-            /<meta\s+name="csrf-token"\s+content="[^"]*"\s*>/,
-            ''
-        )
-        
-        modifiedHtml = modifiedHtml.replace(
-            /nonce="[^"]*"/g,
-            `nonce="${nonce}"`
-        )
-        
+        let modifiedHtml = html.replace(/<meta\s+name="csrf-token"\s+content="[^"]*"\s*>/, '')
+        modifiedHtml = modifiedHtml.replace(/nonce="[^"]*"/g, `nonce="${nonce}"`)
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
         res.send(modifiedHtml)
     })
@@ -255,19 +296,10 @@ app.get("/admin/dashboard.html", (req, res) => {
 app.get("/admin/*.html", (req, res) => {
     const filePath = path.join(__dirname, 'admin', path.basename(req.path))
     fs.readFile(filePath, 'utf8', (err, html) => {
-        if (err) {
-            console.error("Error reading admin HTML:", err)
-            return res.status(404).send('Page not found')
-        }
+        if (err) return res.status(404).send('Page not found')
         const nonce = res.locals.nonce || ''
-        let modifiedHtml = html.replace(
-            /<meta\s+name="csrf-token"\s+content="[^"]*"\s*>/,
-            ''
-        )
-        modifiedHtml = modifiedHtml.replace(
-            /nonce="[^"]*"/g,
-            `nonce="${nonce}"`
-        )
+        let modifiedHtml = html.replace(/<meta\s+name="csrf-token"\s+content="[^"]*"\s*>/, '')
+        modifiedHtml = modifiedHtml.replace(/nonce="[^"]*"/g, `nonce="${nonce}"`)
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
         res.send(modifiedHtml)
     })
@@ -275,36 +307,19 @@ app.get("/admin/*.html", (req, res) => {
 
 /* ================= PUBLIC PROFILE PAGE WITH NONCE ================= */
 app.get("/:username", (req, res, next) => {
-    if (req.params.username.startsWith('api/') || req.params.username.startsWith('admin/')) {
-        return next()
-    }
-    
+    if (req.params.username.startsWith('api/') || req.params.username.startsWith('admin/')) return next()
     const filePath = path.join(__dirname, "public/index.html")
     fs.readFile(filePath, 'utf8', (err, html) => {
-        if (err) {
-            console.error("Error reading index.html:", err)
-            return res.status(500).send('Error loading page')
-        }
-        
+        if (err) return res.status(500).send('Error loading page')
         const nonce = res.locals.nonce || ''
-        
-        let modifiedHtml = html.replace(
-            /<script nonce="[^"]*">/g,
-            `<script nonce="${nonce}">`
-        )
-        
-        modifiedHtml = modifiedHtml.replace(
-            /{{nonce}}/g,
-            nonce
-        )
-        
+        let modifiedHtml = html.replace(/<script nonce="[^"]*">/g, `<script nonce="${nonce}">`)
+        modifiedHtml = modifiedHtml.replace(/{{nonce}}/g, nonce)
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
         res.send(modifiedHtml)
     })
 })
 
 /* ================= HELPER FUNCTIONS ================= */
-
 function createFingerprint(req) {
     const data = [
         req.headers['user-agent'] || '',
@@ -315,51 +330,31 @@ function createFingerprint(req) {
     return crypto.createHash('sha256').update(data).digest('hex')
 }
 
-// ✅ دالة مساعدة للتأخير الثابت (لمنع timing attacks)
 async function constantTimeDelay(startTime) {
-    const minDelay = 200 // 200ms minimum
-    const elapsed = Number(process.hrtime.bigint() - startTime) / 1_000_000 // convert to ms
-    if (elapsed < minDelay) {
-        await new Promise(resolve => setTimeout(resolve, minDelay - elapsed))
-    }
+    const minDelay = 200
+    const elapsed = Number(process.hrtime.bigint() - startTime) / 1_000_000
+    if (elapsed < minDelay) await new Promise(resolve => setTimeout(resolve, minDelay - elapsed))
 }
 
-// ✅ تحديث دالة generateTokens لدعم version
 function generateTokens(userId, fingerprint, version = 0) {
     const csrfToken = crypto.randomBytes(32).toString("hex")
-
     const accessToken = jwt.sign(
-        { 
-            id: userId,
-            fingerprint,
-            csrfToken,
-            version,
-            type: 'access'
-        },
+        { id: userId, fingerprint, csrfToken, version, type: 'access' },
         JWT_SECRET,
         { expiresIn: "15m" }
     )
-
     const refreshToken = jwt.sign(
-        { 
-            id: userId, 
-            version,
-            type: "refresh" 
-        },
+        { id: userId, version, type: "refresh" },
         REFRESH_TOKEN_SECRET,
         { expiresIn: "7d" }
     )
-
     return { accessToken, refreshToken, csrfToken }
 }
 
 async function isTokenBlacklisted(token) {
     try {
-        const result = await pool.query(
-            "SELECT id FROM blacklisted_tokens WHERE token = $1 AND expires_at > NOW()",
-            [token]
-        )
-        return result.rows.length > 0
+        const result = await BlacklistedToken.findOne({ token })
+        return !!result
     } catch (error) {
         console.error("Blacklist check error:", error)
         return false
@@ -368,19 +363,11 @@ async function isTokenBlacklisted(token) {
 
 async function detectAttack(req, userId) {
     try {
-        const attempts = await pool.query(
-            "SELECT COUNT(*) FROM audit_logs WHERE user_id=$1 AND action='LOGIN_FAILED' AND created_at > NOW() - INTERVAL '5 minutes'",
-            [userId]
-        )
-        
-        if (parseInt(attempts.rows[0].count) > 10) {
-            await pool.query(
-                "UPDATE users SET locked_until = NOW() + INTERVAL '1 hour' WHERE id=$1",
-                [userId]
-            )
-            if (Sentry) {
-                Sentry.captureMessage(`🚨 Brute force attack detected on user ${userId} from IP ${req.ip}`)
-            }
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000)
+        const attempts = await AuditLog.countDocuments({ user_id: userId, action: 'LOGIN_FAILED', created_at: { $gt: fiveMinsAgo } })
+        if (attempts > 10) {
+            await User.findByIdAndUpdate(userId, { locked_until: new Date(Date.now() + 60 * 60 * 1000) })
+            if (Sentry) Sentry.captureMessage(`🚨 Brute force attack detected on user ${userId} from IP ${req.ip}`)
         }
     } catch (error) {
         console.error("Attack detection error:", error)
@@ -389,17 +376,15 @@ async function detectAttack(req, userId) {
 
 async function createAuditLog(userId, action, req) {
     try {
-        await pool.query(
-            `INSERT INTO audit_logs (user_id, action, ip, user_agent, request_id)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [userId, action, req.ip || req.connection.remoteAddress, req.get('User-Agent'), req.requestId]
-        )
-    } catch (error) {
-        console.error({
-            error: "Audit log error",
-            message: error.message,
-            requestId: req?.requestId
+        await AuditLog.create({
+            user_id: userId,
+            action,
+            ip: req.ip || req.connection.remoteAddress,
+            user_agent: req.get('User-Agent'),
+            request_id: req.requestId
         })
+    } catch (error) {
+        console.error("Audit log error:", error.message)
     }
 }
 
@@ -410,127 +395,76 @@ async function auth(req, res, next) {
     const token = header.split(" ")[1]
 
     try {
-        if (await isTokenBlacklisted(token)) {
-            return res.status(403).json({ error: "Token revoked" })
-        }
+        if (await isTokenBlacklisted(token)) return res.status(403).json({ error: "Token revoked" })
 
         const decoded = jwt.verify(token, JWT_SECRET)
         
         const headerCsrf = req.headers["x-csrf-token"]
-        if (!headerCsrf || headerCsrf !== decoded.csrfToken) {
-            return res.status(403).json({ error: "Invalid CSRF token" })
-        }
+        if (!headerCsrf || headerCsrf !== decoded.csrfToken) return res.status(403).json({ error: "Invalid CSRF token" })
         
         const currentFingerprint = createFingerprint(req)
-        if (decoded.fingerprint && decoded.fingerprint !== currentFingerprint) {
-            return res.status(403).json({ error: "Invalid device fingerprint" })
-        }
+        if (decoded.fingerprint && decoded.fingerprint !== currentFingerprint) return res.status(403).json({ error: "Invalid device fingerprint" })
 
         req.user = decoded
         
-        pool.query(
-            "UPDATE users SET last_active = NOW() WHERE id = $1",
-            [decoded.id]
-        ).catch(err => console.error("Failed to update last_active:", err.message))
+        await User.findByIdAndUpdate(decoded.id, { last_active: new Date() }).catch(err => console.error("Failed to update last_active:", err.message))
         
         next()
     } catch (err) {
-        if (err.name === 'TokenExpiredError') {
-            return res.status(401).json({ error: "Token expired" })
-        }
+        if (err.name === 'TokenExpiredError') return res.status(401).json({ error: "Token expired" })
         res.status(403).json({ error: "Invalid token" })
     }
 }
 
-const validateUsername = (username) => {
-    return username && 
-           validator.isLength(username, { min: 3, max: 30 }) && 
-           validator.matches(username, /^[a-zA-Z0-9_]+$/)
-}
-
-const validatePassword = (password) => {
-    return password && 
-           validator.isLength(password, { min: 8 }) &&
-           validator.matches(password, /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-}
-
-const validateEmail = (email) => {
-    return email && validator.isEmail(email)
-}
+const validateUsername = (username) => username && validator.isLength(username, { min: 3, max: 30 }) && validator.matches(username, /^[a-zA-Z0-9_]+$/)
+const validatePassword = (password) => password && validator.isLength(password, { min: 8 }) && validator.matches(password, /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+const validateEmail = (email) => email && validator.isEmail(email)
 
 /* ================= REGISTER ================= */
 app.post("/api/register", registerLimiter, async (req, res) => {
     try {
         const { username, email, password } = req.body
 
-        if (!validateUsername(username)) {
-            return res.status(400).json({ 
-                error: "Username must be 3-30 characters and contain only letters, numbers, and underscores" 
-            })
-        }
+        if (!validateUsername(username)) return res.status(400).json({ error: "Username must be 3-30 characters and contain only letters, numbers, and underscores" })
+        if (!validateEmail(email)) return res.status(400).json({ error: "Invalid email format" })
+        if (!validatePassword(password)) return res.status(400).json({ error: "Password must be at least 8 characters with uppercase, lowercase, and number" })
 
-        if (!validateEmail(email)) {
-            return res.status(400).json({ error: "Invalid email format" })
-        }
-
-        if (!validatePassword(password)) {
-            return res.status(400).json({ 
-                error: "Password must be at least 8 characters with uppercase, lowercase, and number" 
-            })
-        }
-
-        const existingUser = await pool.query(
-            "SELECT id FROM users WHERE username = $1 OR email = $2",
-            [username, email]
-        )
-
-        if (existingUser.rows.length > 0) {
-            return res.status(400).json({ error: "Registration failed" })
-        }
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] })
+        if (existingUser) return res.status(400).json({ error: "Registration failed" })
 
         const hash = await bcrypt.hash(password, 12)
 
-        const client = await pool.connect()
+        const session = await mongoose.startSession()
+        session.startTransaction()
+
         try {
-            await client.query('BEGIN')
+            const user = await User.create([{
+                username,
+                email,
+                password_hash: hash,
+                refresh_token_version: 0
+            }], { session })
 
-            const user = await client.query(
-                "INSERT INTO users (username, email, password_hash, refresh_token_version) VALUES ($1, $2, $3, 0) RETURNING id",
-                [username, email, hash]
-            )
+            const userId = user[0]._id
 
-            const userId = user.rows[0].id
+            await Profile.create([{ user_id: userId }], { session })
 
-            await client.query(
-                "INSERT INTO profiles (user_id) VALUES ($1)",
-                [userId]
-            )
+            const secret = speakeasy.generateSecret({ length: 20, name: `DotMe:${username}` })
 
-            const secret = speakeasy.generateSecret({
-                length: 20,
-                name: `Taplink:${username}`
-            })
+            await User.findByIdAndUpdate(userId, { twofa_secret: secret.base32 }, { session })
 
-            await client.query(
-                "UPDATE users SET twofa_secret=$1 WHERE id=$2",
-                [secret.base32, userId]
-            )
-
-            await client.query('COMMIT')
+            await session.commitTransaction()
 
             const qr = await QRCode.toDataURL(secret.otpauth_url)
             await createAuditLog(userId, 'REGISTER', req)
 
-            res.json({
-                message: "Registration successful! Scan QR with Google Authenticator",
-                qr
-            })
+            res.json({ message: "Registration successful! Scan QR with Google Authenticator", qr })
 
         } catch (err) {
-            await client.query('ROLLBACK')
+            await session.abortTransaction()
             throw err
         } finally {
-            client.release()
+            session.endSession()
         }
 
     } catch (err) {
@@ -544,27 +478,18 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     try {
         const { username, password } = req.body
 
-        if (!username || !password) {
-            return res.status(400).json({ error: "Username and password required" })
-        }
+        if (!username || !password) return res.status(400).json({ error: "Username and password required" })
 
-        // ✅ ثابت لجميع الحالات - نستخدمه لمقارنة timing
         const constantTimePassword = "dummy_password_for_timing_" + crypto.randomBytes(4).toString('hex')
-        
-        // ✅ نبدأ timing ثابت
         const startTime = process.hrtime.bigint()
 
-        const result = await pool.query(
-            "SELECT * FROM users WHERE username=$1",
-            [username]
-        )
+        const user = await User.findOne({ username })
 
-        let user = result.rows[0]
         let isValidUser = !!user
-        
-        // ✅ إذا المستخدم غير موجود، نستخدم بيانات وهمية
+        let userForCompare = user
+
         if (!isValidUser) {
-            user = {
+            userForCompare = {
                 id: null,
                 password_hash: await bcrypt.hash(constantTimePassword, 12),
                 twofa_secret: null,
@@ -572,76 +497,39 @@ app.post("/api/login", loginLimiter, async (req, res) => {
             }
         }
 
-        // ✅ تحقق من lock
-        if (user.locked_until && new Date(user.locked_until) > new Date()) {
-            const minutesLeft = Math.ceil((new Date(user.locked_until) - new Date()) / (1000 * 60))
-            
-            // ✅ تأخير ثابت لمنع timing
+        if (userForCompare?.locked_until && new Date(userForCompare.locked_until) > new Date()) {
+            const minutesLeft = Math.ceil((new Date(userForCompare.locked_until) - new Date()) / (1000 * 60))
             await constantTimeDelay(startTime)
-            
-            return res.status(403).json({ 
-                error: `Account locked. Try again in ${minutesLeft} minutes.` 
-            })
+            return res.status(403).json({ error: `Account locked. Try again in ${minutesLeft} minutes.` })
         }
 
-        // ✅ مقارنة password في وقت ثابت
-        const match = await bcrypt.compare(password, user.password_hash)
+        const match = await bcrypt.compare(password, userForCompare.password_hash)
 
-        // ✅ تأخير ثابت - نفس الوقت سواء نجح أو فشل
         await constantTimeDelay(startTime)
 
         if (!isValidUser || !match) {
-            // ✅ تسجيل المحاولة الفاششة (إذا كان user حقيقي)
             if (isValidUser) {
-                await createAuditLog(user.id, 'LOGIN_FAILED', req)
-                await detectAttack(req, user.id)
-                
-                const failedAttempts = await pool.query(
-                    "SELECT COUNT(*) FROM audit_logs WHERE user_id=$1 AND action='LOGIN_FAILED' AND created_at > NOW() - INTERVAL '15 minutes'",
-                    [user.id]
-                )
-                
-                if (parseInt(failedAttempts.rows[0].count) >= 5) {
-                    await pool.query(
-                        "UPDATE users SET locked_until = NOW() + INTERVAL '15 minutes' WHERE id=$1",
-                        [user.id]
-                    )
-                }
+                await createAuditLog(user._id, 'LOGIN_FAILED', req)
+                await detectAttack(req, user._id)
+
+                const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000)
+                const failedAttempts = await AuditLog.countDocuments({ user_id: user._id, action: 'LOGIN_FAILED', created_at: { $gt: fifteenMinsAgo } })
+                if (failedAttempts >= 5) await User.findByIdAndUpdate(user._id, { locked_until: new Date(Date.now() + 15 * 60 * 1000) })
             }
-            
             return res.status(403).json({ error: "Invalid credentials" })
         }
 
-        // ✅ reset lock بعد login ناجح
-        await pool.query(
-            "UPDATE users SET locked_until = NULL WHERE id = $1",
-            [user.id]
-        )
+        await User.findByIdAndUpdate(user._id, { locked_until: null, last_login: new Date() })
 
-        await pool.query(
-            "UPDATE users SET last_login = NOW() WHERE id = $1",
-            [user.id]
-        )
+        await createAuditLog(user._id, 'LOGIN_SUCCESS', req)
 
-        await createAuditLog(user.id, 'LOGIN_SUCCESS', req)
+        if (user.twofa_secret) return res.json({ step: "2fa", userId: user._id })
 
-        // ✅ إذا كان لديه 2FA، نطلب التحقق
-        if (user.twofa_secret) {
-            return res.json({
-                step: "2fa",
-                userId: user.id
-            })
-        }
-
-        // ✅ إنشاء التوكنات مع رقم الإصدار الحالي
         const fingerprint = createFingerprint(req)
         const version = user.refresh_token_version || 0
-        const { accessToken, refreshToken, csrfToken } = generateTokens(user.id, fingerprint, version)
+        const { accessToken, refreshToken, csrfToken } = generateTokens(user._id, fingerprint, version)
 
-        await pool.query(
-            "UPDATE users SET refresh_token = $1 WHERE id = $2",
-            [refreshToken, user.id]
-        )
+        await User.findByIdAndUpdate(user._id, { refresh_token: refreshToken })
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -650,11 +538,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
-        res.json({ 
-            token: accessToken, 
-            csrfToken,
-            username: user.username 
-        })
+        res.json({ token: accessToken, csrfToken, username: user.username })
 
     } catch (err) {
         console.error(`❌ [${req.requestId}] Login error:`, err.message)
@@ -667,22 +551,14 @@ app.post("/api/2fa/verify", async (req, res) => {
     try {
         const { userId, code } = req.body
 
-        if (!userId || !code) {
-            return res.status(400).json({ error: "User ID and code required" })
-        }
+        if (!userId || !code) return res.status(400).json({ error: "User ID and code required" })
 
-        const result = await pool.query(
-            "SELECT twofa_secret, username, refresh_token_version FROM users WHERE id=$1",
-            [userId]
-        )
+        const user = await User.findById(userId)
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "User not found" })
-        }
+        if (!user) return res.status(404).json({ error: "User not found" })
 
-        const secret = result.rows[0].twofa_secret
         const verified = speakeasy.totp.verify({
-            secret,
+            secret: user.twofa_secret,
             encoding: "base32",
             token: code,
             window: 2
@@ -695,15 +571,11 @@ app.post("/api/2fa/verify", async (req, res) => {
 
         await createAuditLog(userId, '2FA_SUCCESS', req)
 
-        // ✅ إنشاء توكنات جديدة بعد 2FA
         const fingerprint = createFingerprint(req)
-        const version = result.rows[0].refresh_token_version || 0
-        const { accessToken, refreshToken, csrfToken } = generateTokens(parseInt(userId), fingerprint, version)
+        const version = user.refresh_token_version || 0
+        const { accessToken, refreshToken, csrfToken } = generateTokens(userId, fingerprint, version)
 
-        await pool.query(
-            "UPDATE users SET refresh_token = $1 WHERE id = $2",
-            [refreshToken, userId]
-        )
+        await User.findByIdAndUpdate(userId, { refresh_token: refreshToken })
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -712,11 +584,7 @@ app.post("/api/2fa/verify", async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
-        res.json({ 
-            token: accessToken, 
-            csrfToken,
-            username: result.rows[0].username 
-        })
+        res.json({ token: accessToken, csrfToken, username: user.username })
 
     } catch (err) {
         console.error(`❌ [${req.requestId}] 2FA verification error:`, err.message)
@@ -724,18 +592,14 @@ app.post("/api/2fa/verify", async (req, res) => {
     }
 })
 
-/* ================= REFRESH TOKEN (محمي من Replay Attacks) ================= */
+/* ================= REFRESH TOKEN ================= */
 app.post("/api/refresh-token", async (req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken
-        if (!refreshToken) {
-            return res.status(401).json({ error: "No refresh token" })
-        }
+        if (!refreshToken) return res.status(401).json({ error: "No refresh token" })
 
         // ✅ التحقق من أن التوكن مش مسحوب
-        if (await isTokenBlacklisted(refreshToken)) {
-            return res.status(403).json({ error: "Token revoked" })
-        }
+        if (await isTokenBlacklisted(refreshToken)) return res.status(403).json({ error: "Token revoked" })
 
         let decoded
         try {
@@ -744,58 +608,49 @@ app.post("/api/refresh-token", async (req, res) => {
             return res.status(403).json({ error: "Invalid refresh token" })
         }
 
-        if (decoded.type !== 'refresh') {
-            return res.status(403).json({ error: "Invalid token type" })
-        }
+        if (decoded.type !== 'refresh') return res.status(403).json({ error: "Invalid token type" })
 
-        const user = await pool.query(
-            "SELECT id, refresh_token, refresh_token_version FROM users WHERE id = $1",
-            [decoded.id]
-        )
+        const user = await User.findById(decoded.id)
 
-        if (user.rows.length === 0) {
-            return res.status(403).json({ error: "User not found" })
-        }
+        if (!user) return res.status(403).json({ error: "User not found" })
 
-        // ✅ التحقق من تطابق التوكن مع النسخة المخزنة
-        if (user.rows[0].refresh_token !== refreshToken) {
+        if (user.refresh_token !== refreshToken) {
             await createAuditLog(decoded.id, 'REFRESH_TOKEN_MISMATCH', req)
-            
-            // ✅ **Replay Attack Detected!** - زيادة رقم الإصدار لسحب كل التوكنات القديمة
-            await pool.query(
-                `UPDATE users 
-                 SET refresh_token = NULL,
-                     refresh_token_version = refresh_token_version + 1 
-                 WHERE id = $1`,
-                [decoded.id]
-            )
-            
+            await User.findByIdAndUpdate(decoded.id, { 
+                refresh_token: null, 
+                refresh_token_version: (user.refresh_token_version || 0) + 1 
+            })
             return res.status(403).json({ error: "Invalid refresh token" })
         }
 
-        // ✅ التحقق من تطابق رقم الإصدار
-        if (decoded.version !== user.rows[0].refresh_token_version) {
+        if (decoded.version !== user.refresh_token_version) {
             await createAuditLog(decoded.id, 'REFRESH_TOKEN_VERSION_MISMATCH', req)
             return res.status(403).json({ error: "Token version mismatch" })
         }
 
-        // ✅ سحب التوكن القديم (rotation)
+        // ✅ سحب التوكن القديم (مع التحقق من عدم التكرار)
         if (decoded.exp) {
-            await pool.query(
-                "INSERT INTO blacklisted_tokens (token, expires_at) VALUES ($1, to_timestamp($2))",
-                [refreshToken, decoded.exp]
-            )
+            try {
+                // استخدم updateOne مع upsert: false عشان منضفش duplicate
+                await BlacklistedToken.updateOne(
+                    { token: refreshToken },
+                    { 
+                        token: refreshToken, 
+                        expires_at: new Date(decoded.exp * 1000) 
+                    },
+                    { upsert: true } // لو موجود مش هيعمل duplicate
+                )
+            } catch (e) {
+                console.log("Token already blacklisted, continuing...")
+            }
         }
 
         // ✅ إنشاء توكنات جديدة مع نفس رقم الإصدار
         const fingerprint = createFingerprint(req)
-        const version = user.rows[0].refresh_token_version
+        const version = user.refresh_token_version
         const { accessToken, refreshToken: newRefreshToken, csrfToken } = generateTokens(decoded.id, fingerprint, version)
 
-        await pool.query(
-            "UPDATE users SET refresh_token = $1 WHERE id = $2",
-            [newRefreshToken, decoded.id]
-        )
+        await User.findByIdAndUpdate(decoded.id, { refresh_token: newRefreshToken })
 
         res.cookie('refreshToken', newRefreshToken, {
             httpOnly: true,
@@ -806,10 +661,7 @@ app.post("/api/refresh-token", async (req, res) => {
 
         await createAuditLog(decoded.id, 'REFRESH_TOKEN_SUCCESS', req)
 
-        res.json({ 
-            token: accessToken,
-            csrfToken
-        })
+        res.json({ token: accessToken, csrfToken })
 
     } catch (err) {
         console.error(`❌ [${req.requestId}] Refresh token error:`, err.message)
@@ -823,28 +675,31 @@ app.post("/api/logout", auth, async (req, res) => {
         const refreshToken = req.cookies.refreshToken
         const accessToken = req.headers.authorization?.split(" ")[1]
 
-        await pool.query(
-            "UPDATE users SET refresh_token = NULL WHERE id = $1",
-            [req.user.id]
-        )
+        await User.findByIdAndUpdate(req.user.id, { refresh_token: null })
 
         if (accessToken) {
             const decoded = jwt.decode(accessToken)
             if (decoded && decoded.exp) {
-                await pool.query(
-                    "INSERT INTO blacklisted_tokens (token, expires_at) VALUES ($1, to_timestamp($2))",
-                    [accessToken, decoded.exp]
-                )
+                try {
+                    await BlacklistedToken.updateOne(
+                        { token: accessToken },
+                        { token: accessToken, expires_at: new Date(decoded.exp * 1000) },
+                        { upsert: true }
+                    )
+                } catch (e) {}
             }
         }
 
         if (refreshToken) {
             const decoded = jwt.decode(refreshToken)
             if (decoded && decoded.exp) {
-                await pool.query(
-                    "INSERT INTO blacklisted_tokens (token, expires_at) VALUES ($1, to_timestamp($2))",
-                    [refreshToken, decoded.exp]
-                )
+                try {
+                    await BlacklistedToken.updateOne(
+                        { token: refreshToken },
+                        { token: refreshToken, expires_at: new Date(decoded.exp * 1000) },
+                        { upsert: true }
+                    )
+                } catch (e) {}
             }
         }
 
@@ -1004,47 +859,31 @@ app.get("/api/profile/:username", async (req, res) => {
             return res.status(404).json({ error: "User not found" })
         }
 
-        const user = await pool.query(
-            "SELECT id FROM users WHERE username=$1",
-            [username]
-        )
+        const user = await User.findOne({ username })
 
-        if (user.rows.length === 0) {
+        if (!user) {
             await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100))
             return res.status(404).json({ error: "User not found" })
         }
 
-        const userId = user.rows[0].id
+        const userId = user._id
 
         const referer = req.headers.referer || ""
         const isAdminRequest = referer.includes('/admin') || req.headers.authorization
         
         if (!isAdminRequest) {
-            await pool.query(
-                `INSERT INTO profile_views (user_id, ip)
-                 SELECT $1, $2
-                 WHERE NOT EXISTS (
-                     SELECT 1 FROM profile_views 
-                     WHERE user_id = $1 AND ip = $2 
-                     AND created_at > NOW() - INTERVAL '10 minutes'
-                 )`,
-                [userId, req.ip || req.connection.remoteAddress]
-            )
+            await ProfileView.create({
+                user_id: userId,
+                ip: req.ip || req.connection.remoteAddress
+            })
         }
 
-        const profile = await pool.query(
-            "SELECT * FROM profiles WHERE user_id=$1",
-            [userId]
-        )
-
-        const links = await pool.query(
-            "SELECT id, name, url FROM links WHERE user_id=$1 ORDER BY position ASC",
-            [userId]
-        )
+        const profile = await Profile.findOne({ user_id: userId })
+        const links = await Link.find({ user_id: userId }).sort({ position: 1 })
 
         res.json({
-            profile: profile.rows[0] || {},
-            links: links.rows
+            profile: profile || {},
+            links: links
         })
 
     } catch (error) {
@@ -1056,27 +895,16 @@ app.get("/api/profile/:username", async (req, res) => {
 /* ================= ADMIN PROFILE ================= */
 app.get("/api/admin/profile", auth, async (req, res) => {
     try {
-        const profile = await pool.query(
-            "SELECT * FROM profiles WHERE user_id=$1",
-            [req.user.id]
-        )
-
-        const links = await pool.query(
-            "SELECT id, name, url FROM links WHERE user_id=$1 ORDER BY position ASC",
-            [req.user.id]
-        )
-        
-        const user = await pool.query(
-            "SELECT username FROM users WHERE id=$1",
-            [req.user.id]
-        )
+        const profile = await Profile.findOne({ user_id: req.user.id })
+        const links = await Link.find({ user_id: req.user.id }).sort({ position: 1 })
+        const user = await User.findById(req.user.id)
 
         res.json({
             profile: {
-                ...profile.rows[0],
-                username: user.rows[0]?.username
+                ...(profile ? profile.toObject() : {}),
+                username: user?.username
             },
-            links: links.rows
+            links: links
         })
     } catch (error) {
         console.error("Admin profile error:", error.message)
@@ -1099,12 +927,19 @@ app.put("/api/profile", auth, async (req, res) => {
             theme: sanitizeHtml(theme || 'default', { allowedTags: [], allowedAttributes: {} })
         }
 
-        await pool.query(
-            `UPDATE profiles
-             SET name=$1, bio=$2, career=$3, phone=$4, image_url=$5, background_url=$6, theme=$7, updated_at=NOW()
-             WHERE user_id=$8`,
-            [sanitizedData.name, sanitizedData.bio, sanitizedData.career, sanitizedData.phone, 
-             sanitizedData.image_url, sanitizedData.background_url, sanitizedData.theme, req.user.id]
+        await Profile.findOneAndUpdate(
+            { user_id: req.user.id },
+            { 
+                name: sanitizedData.name,
+                bio: sanitizedData.bio,
+                career: sanitizedData.career,
+                phone: sanitizedData.phone,
+                image_url: sanitizedData.image_url,
+                background_url: sanitizedData.background_url,
+                theme: sanitizedData.theme,
+                updated_at: new Date()
+            },
+            { upsert: true }
         )
 
         await createAuditLog(req.user.id, 'PROFILE_UPDATE', req)
@@ -1124,30 +959,23 @@ app.post("/api/forgot-password", emailLimiter, async (req, res) => {
             return res.status(400).json({ error: "Valid email required" })
         }
 
-        const user = await pool.query(
-            "SELECT * FROM users WHERE email=$1",
-            [email]
-        )
+        const user = await User.findOne({ email })
 
         let message = "If the email exists, a reset link was sent."
 
-        if (user.rows.length) {
+        if (user) {
             const rawToken = crypto.randomBytes(32).toString("hex")
             const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex")
 
-            await pool.query(
-                `UPDATE users
-                 SET reset_token=$1,
-                     reset_expires=NOW() + INTERVAL '1 hour'
-                 WHERE email=$2`,
-                [hashedToken, email]
-            )
+            user.reset_token = hashedToken
+            user.reset_expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+            await user.save()
 
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`
             const link = `${baseUrl}/reset.html?token=${rawToken}`
 
             await transporter.sendMail({
-                from: `"Taplink App" <${process.env.EMAIL_USER}>`,
+                from: `"DotMe" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: "Password Reset Request",
                 html: `
@@ -1162,7 +990,7 @@ app.post("/api/forgot-password", emailLimiter, async (req, res) => {
                 `
             })
 
-            await createAuditLog(user.rows[0].id, 'PASSWORD_RESET_REQUEST', req)
+            await createAuditLog(user._id, 'PASSWORD_RESET_REQUEST', req)
         }
 
         res.json({ message })
@@ -1250,7 +1078,6 @@ app.get("/reset-2fa.html", (req, res) => {
 
 // ================= THEMES ENDPOINTS =================
 
-// جلب الثيمات المتاحة (اختياري - إذا كنت تريد تخزينها في قاعدة البيانات)
 // جلب الثيمات المتاحة
 app.get("/api/admin/themes", auth, async (req, res) => {
     try {
@@ -1283,7 +1110,6 @@ app.get("/api/admin/themes", auth, async (req, res) => {
 });
 
 // اختيار ثيم
-// اختيار ثيم
 app.post("/api/admin/select-theme", auth, async (req, res) => {
     try {
         const { theme } = req.body;
@@ -1303,9 +1129,10 @@ app.post("/api/admin/select-theme", auth, async (req, res) => {
             return res.status(400).json({ error: "Invalid theme" });
         }
         
-        await pool.query(
-            "UPDATE profiles SET theme = $1 WHERE user_id = $2",
-            [theme, req.user.id]
+        await Profile.findOneAndUpdate(
+            { user_id: req.user.id },
+            { theme: theme },
+            { upsert: true }
         );
         
         await createAuditLog(req.user.id, 'THEME_CHANGED', req);
@@ -1322,17 +1149,14 @@ app.post("/api/admin/save-theme", auth, async (req, res) => {
     try {
         const themeData = req.body;
         
-        // التحقق من صحة البيانات
         if (!themeData) {
             return res.status(400).json({ error: "Theme data is required" });
         }
         
-        // تحديث التخصيصات في قاعدة البيانات
-        await pool.query(
-            `UPDATE profiles 
-             SET custom_theme = $1 
-             WHERE user_id = $2`,
-            [JSON.stringify(themeData), req.user.id]
+        await Profile.findOneAndUpdate(
+            { user_id: req.user.id },
+            { custom_theme: themeData },
+            { upsert: true }
         );
         
         await createAuditLog(req.user.id, 'CUSTOM_THEME_SAVED', req);
@@ -1347,13 +1171,10 @@ app.post("/api/admin/save-theme", auth, async (req, res) => {
 // استرجاع التخصيصات المخصصة
 app.get("/api/admin/custom-theme", auth, async (req, res) => {
     try {
-        const result = await pool.query(
-            "SELECT custom_theme FROM profiles WHERE user_id = $1",
-            [req.user.id]
-        );
+        const profile = await Profile.findOne({ user_id: req.user.id });
         
         res.json({ 
-            custom_theme: result.rows[0]?.custom_theme || null 
+            custom_theme: profile?.custom_theme || null 
         });
         
     } catch (error) {
@@ -1362,53 +1183,22 @@ app.get("/api/admin/custom-theme", auth, async (req, res) => {
     }
 });
 
-
-app.post("/api/links/reorder", auth, async (req, res) => {
-    try {
-        const { order } = req.body
-
-        if (!Array.isArray(order)) {
-            return res.status(400).json({ error: "Invalid order format" })
-        }
-
-        for (const item of order) {
-            await pool.query(
-                "UPDATE links SET position=$1 WHERE id=$2 AND user_id=$3",
-                [item.order, item.id, req.user.id]
-            )
-        }
-
-        res.json({ message: "Links reordered successfully" })
-
-    } catch (err) {
-        console.error("Reorder error:", err)
-        res.status(500).json({ error: "Failed to reorder links" })
-    }
-})
-
-
 // ================= GET USER THEME =================
 app.get("/api/profile/:username/theme", async (req, res) => {
     try {
         const username = req.params.username;
         
-        const user = await pool.query(
-            "SELECT id FROM users WHERE username = $1",
-            [username]
-        );
+        const user = await User.findOne({ username });
         
-        if (user.rows.length === 0) {
+        if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
         
-        const profile = await pool.query(
-            "SELECT theme, custom_theme FROM profiles WHERE user_id = $1",
-            [user.rows[0].id]
-        );
+        const profile = await Profile.findOne({ user_id: user._id });
         
         res.json({
-            theme: profile.rows[0]?.theme || "dark",
-            custom_theme: profile.rows[0]?.custom_theme || null
+            theme: profile?.theme || "dark",
+            custom_theme: profile?.custom_theme || null
         });
         
     } catch (error) {
@@ -1417,59 +1207,40 @@ app.get("/api/profile/:username/theme", async (req, res) => {
     }
 });
 
-
 // ================= DRAG & DROP ENDPOINT =================
 app.post("/api/links/reorder", auth, async (req, res) => {
-    const client = await pool.connect();
-    
     try {
         const { order } = req.body;
         
-        console.log("Received order:", order); // للتصحيح
+        console.log("Received order:", order);
         
         if (!order || !Array.isArray(order)) {
             return res.status(400).json({ error: "Invalid order data" });
         }
-        
-        await client.query('BEGIN');
         
         for (const item of order) {
             if (!item.id || typeof item.order !== 'number') {
                 throw new Error("Invalid order item");
             }
             
-            // التحقق أن الرابط يخص هذا المستخدم
-            const checkResult = await client.query(
-                "SELECT id FROM links WHERE id = $1 AND user_id = $2",
-                [item.id, req.user.id]
-            );
+            const link = await Link.findOne({ _id: item.id, user_id: req.user.id });
             
-            if (checkResult.rows.length === 0) {
+            if (!link) {
                 throw new Error(`Link ${item.id} not found or unauthorized`);
             }
             
-            // تحديث الترتيب
-            await client.query(
-                "UPDATE links SET sort_order = $1 WHERE id = $2 AND user_id = $3",
-                [item.order, item.id, req.user.id]
-            );
+            link.sort_order = item.order;
+            await link.save();
         }
-        
-        await client.query('COMMIT');
         
         await createAuditLog(req.user.id, 'LINKS_REORDERED', req);
         res.json({ success: true, message: "Links reordered successfully" });
         
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error("Reorder error:", error);
         res.status(500).json({ error: error.message || "Failed to reorder links" });
-        
-    } finally {
-        client.release();
     }
 });
-
 
 /* ================= SERVE RESET PAGE WITH NONCE ================= */
 app.get("/reset.html", (req, res) => {
@@ -1517,28 +1288,23 @@ app.post("/api/reset-password", async (req, res) => {
         }
 
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
-        const user = await pool.query(
-            `SELECT * FROM users
-             WHERE reset_token=$1
-             AND reset_expires > NOW()`,
-            [hashedToken]
-        )
+        const user = await User.findOne({ 
+            reset_token: hashedToken,
+            reset_expires: { $gt: new Date() }
+        })
 
-        if (!user.rows.length) {
+        if (!user) {
             return res.status(400).json({ error: "Invalid or expired token" })
         }
 
         const hash = await bcrypt.hash(password, 12)
-        await pool.query(
-            `UPDATE users
-             SET password_hash=$1,
-                 reset_token=NULL,
-                 reset_expires=NULL
-             WHERE id=$2`,
-            [hash, user.rows[0].id]
-        )
+        
+        user.password_hash = hash
+        user.reset_token = null
+        user.reset_expires = null
+        await user.save()
 
-        await createAuditLog(user.rows[0].id, 'PASSWORD_RESET_SUCCESS', req)
+        await createAuditLog(user._id, 'PASSWORD_RESET_SUCCESS', req)
         res.json({ message: "Password updated successfully" })
 
     } catch (e) {
@@ -1556,30 +1322,23 @@ app.post("/api/reset-2fa", emailLimiter, async (req, res) => {
             return res.status(400).json({ error: "Valid email required" })
         }
 
-        const user = await pool.query(
-            "SELECT * FROM users WHERE email=$1",
-            [email]
-        )
+        const user = await User.findOne({ email })
 
         let message = "If the email exists, a reset link will be sent."
 
-        if (user.rows.length) {
+        if (user) {
             const rawToken = crypto.randomBytes(32).toString("hex")
             const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex")
 
-            await pool.query(
-                `UPDATE users
-                 SET reset_2fa_token=$1,
-                     reset_2fa_expires=NOW() + INTERVAL '1 hour'
-                 WHERE email=$2`,
-                [hashedToken, email]
-            )
+            user.reset_2fa_token = hashedToken
+            user.reset_2fa_expires = new Date(Date.now() + 60 * 60 * 1000)
+            await user.save()
 
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`
             const link = `${baseUrl}/reset-2fa.html?token=${rawToken}`
 
             await transporter.sendMail({
-                from: `"Taplink App" <${process.env.EMAIL_USER}>`,
+                from: `"DotMe" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: "Reset Two-Factor Authentication",
                 html: `
@@ -1592,7 +1351,7 @@ app.post("/api/reset-2fa", emailLimiter, async (req, res) => {
                 `
             })
 
-            await createAuditLog(user.rows[0].id, '2FA_RESET_REQUEST', req)
+            await createAuditLog(user._id, '2FA_RESET_REQUEST', req)
         }
 
         res.json({ message })
@@ -1614,32 +1373,26 @@ app.post("/api/new-2fa", async (req, res) => {
 
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
 
-        const user = await pool.query(
-            `SELECT * FROM users
-             WHERE reset_2fa_token=$1
-             AND reset_2fa_expires > NOW()`,
-            [hashedToken]
-        )
+        const user = await User.findOne({ 
+            reset_2fa_token: hashedToken,
+            reset_2fa_expires: { $gt: new Date() }
+        })
 
-        if (!user.rows.length) {
+        if (!user) {
             return res.status(400).json({ error: "Invalid or expired token" })
         }
 
         const secret = speakeasy.generateSecret({
             length: 20,
-            name: "Taplink:" + user.rows[0].username
+            name: "DotMe:" + user.username
         })
 
-        await pool.query(
-            `UPDATE users
-             SET twofa_secret=$1,
-                 reset_2fa_token=NULL,
-                 reset_2fa_expires=NULL
-             WHERE id=$2`,
-            [secret.base32, user.rows[0].id]
-        )
+        user.twofa_secret = secret.base32
+        user.reset_2fa_token = null
+        user.reset_2fa_expires = null
+        await user.save()
 
-        await createAuditLog(user.rows[0].id, '2FA_RESET_COMPLETE', req)
+        await createAuditLog(user._id, '2FA_RESET_COMPLETE', req)
 
         const qr = await QRCode.toDataURL(secret.otpauth_url)
         res.json({ qr })
@@ -1684,24 +1437,22 @@ app.post("/api/link", auth, async (req, res) => {
             return res.status(400).json({ error: "Invalid URL - must be http:// or https://" })
         }
 
-        const linkCount = await pool.query(
-            "SELECT COUNT(*) FROM links WHERE user_id=$1",
-            [req.user.id]
-        )
+        const linkCount = await Link.countDocuments({ user_id: req.user.id })
 
-        if (parseInt(linkCount.rows[0].count) >= 23) {
+        if (linkCount >= 23) {
             return res.status(400).json({ error: "Maximum 23 links allowed" })
         }
 
-        const result = await pool.query(
-            "INSERT INTO links (user_id, name, url) VALUES ($1, $2, $3) RETURNING id",
-            [req.user.id, name, url]
-        )
+        const link = await Link.create({
+            user_id: req.user.id,
+            name: name,
+            url: url
+        })
 
         await createAuditLog(req.user.id, 'LINK_ADD', req)
         res.json({ 
             message: "Link added successfully",
-            linkId: result.rows[0].id 
+            linkId: link._id 
         })
 
     } catch (error) {
@@ -1714,17 +1465,9 @@ app.delete("/api/link/:id", auth, async (req, res) => {
     try {
         const id = req.params.id
 
-        if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
-            return res.status(400).json({ error: "Invalid link ID" })
-        }
+        const result = await Link.deleteOne({ _id: id, user_id: req.user.id })
 
-        const linkId = parseInt(id)
-        const result = await pool.query(
-            "DELETE FROM links WHERE id=$1 AND user_id=$2 RETURNING id",
-            [linkId, req.user.id]
-        )
-
-        if (result.rows.length === 0) {
+        if (result.deletedCount === 0) {
             return res.status(404).json({ error: "Link not found" })
         }
 
@@ -1742,23 +1485,13 @@ app.post("/api/link/:id/click", async (req, res) => {
     try {
         const linkId = req.params.id
 
-        if (!linkId || isNaN(parseInt(linkId)) || parseInt(linkId) <= 0) {
-            return res.status(400).json({ error: "Invalid link ID" })
-        }
+        const link = await Link.findById(linkId)
 
-        const linkExists = await pool.query(
-            "SELECT id FROM links WHERE id = $1",
-            [linkId]
-        )
-
-        if (linkExists.rows.length === 0) {
+        if (!link) {
             return res.status(404).json({ error: "Link not found" })
         }
 
-        await pool.query(
-            "INSERT INTO link_clicks (link_id) VALUES ($1)",
-            [linkId]
-        )
+        await LinkClick.create({ link_id: linkId })
         
         res.json({ success: true })
     } catch (error) {
@@ -1772,22 +1505,16 @@ app.get("/api/dashboard", auth, async (req, res) => {
     try {
         const userId = req.user.id
 
-        const [viewsResult, linksResult, clicksResult] = await Promise.all([
-            pool.query("SELECT COUNT(*) FROM profile_views WHERE user_id=$1", [userId]),
-            pool.query("SELECT COUNT(*) FROM links WHERE user_id=$1", [userId]),
-            pool.query(
-                `SELECT COUNT(*)
-                 FROM link_clicks
-                 JOIN links ON links.id = link_clicks.link_id
-                 WHERE links.user_id = $1`,
-                [userId]
-            )
+        const [viewsCount, linksCount, clicksCount] = await Promise.all([
+            ProfileView.countDocuments({ user_id: userId }),
+            Link.countDocuments({ user_id: userId }),
+            LinkClick.countDocuments({ link_id: { $in: (await Link.find({ user_id: userId }).select('_id')).map(l => l._id) } })
         ])
 
         res.json({
-            views: parseInt(viewsResult.rows[0].count),
-            links: parseInt(linksResult.rows[0].count),
-            clicks: parseInt(clicksResult.rows[0].count)
+            views: viewsCount,
+            links: linksCount,
+            clicks: clicksCount
         })
 
     } catch (error) {
@@ -1810,13 +1537,10 @@ app.get("/api/check-username/:username", async (req, res) => {
             })
         }
 
-        const result = await pool.query(
-            "SELECT id FROM users WHERE username=$1",
-            [username]
-        )
+        const user = await User.findOne({ username })
 
         res.json({ 
-            available: result.rows.length === 0,
+            available: !user,
             message: "Username check completed"
         })
 
@@ -1833,7 +1557,7 @@ app.get("/api/check-username/:username", async (req, res) => {
 app.get("/api/health", async (req, res) => {
     try {
         const startTime = Date.now()
-        await pool.query("SELECT 1")
+        await mongoose.connection.db.admin().ping()
         const dbLatency = Date.now() - startTime
 
         res.json({
@@ -1905,28 +1629,23 @@ app.use((err, req, res, next) => {
 })
 
 /* ================= SERVER ================= */
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log("\n" + "=".repeat(60))
-    console.log("🚀 Taplink SaaS Server (Enterprise Edition)")
-    console.log("=".repeat(60))
-    console.log(`📡 Port: ${PORT}`)
-    console.log(`🌍 URL: http://localhost:${PORT}`)
-    console.log(`🌍 Network: http://${getLocalIP()}:${PORT}`)
-    console.log(`🔒 CSRF: ✅ JWT-based (no sessions)`)
-    console.log(`🛡️  XSS: ✅ Protected (CSP with nonce)`)
-    console.log(`📁 Upload: ✅ Enterprise-grade MIME validation`)
-    console.log(`🔐 Refresh Token: ✅ Anti-replay protection`)
-    console.log(`⏱️  Login: ✅ Timing attack protected`)
-    console.log("=".repeat(60) + "\n")
-})
+if (require.main === module) {
+    const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log("\n" + "=".repeat(60))
+        console.log("🚀 DotMe Server (MongoDB Edition)")
+        console.log("=".repeat(60))
+        console.log(`📡 Port: ${PORT}`)
+        console.log(`🌍 URL: http://localhost:${PORT}`)
+        console.log(`🌍 Network: http://${getLocalIP()}:${PORT}`)
+        console.log("=".repeat(60) + "\n")
+    })
+}
 
 function getLocalIP() {
     const nets = require('os').networkInterfaces()
     for (const name of Object.keys(nets)) {
         for (const net of nets[name]) {
-            if (net.family === 'IPv4' && !net.internal) {
-                return net.address
-            }
+            if (net.family === 'IPv4' && !net.internal) return net.address
         }
     }
     return '192.168.1.10'
@@ -1934,13 +1653,8 @@ function getLocalIP() {
 
 process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server')
-    server.close(() => {
-        console.log('HTTP server closed')
-        pool.end(() => {
-            console.log('Database pool closed')
-            process.exit(0)
-        })
-    })
+    mongoose.connection.close()
+    process.exit(0)
 })
 
 module.exports = app
