@@ -457,13 +457,21 @@ h1 {
     }
 }
 
-.menu-dropdown { left: 0; }
-.share-menu { left: 55px; }
+.menu-dropdown {
+    left: 0;
+}
+
+.share-menu {
+    right: 0;
+    left: auto;
+    top: 60px;
+}
 
 @media (max-width: 420px) {
     .share-menu {
-        left: 0;
-        top: 100px;
+        right: 0;
+        left: auto;
+        top: 60px;
     }
 }
 
