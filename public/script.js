@@ -148,44 +148,37 @@ function renderProfile(data) {
     updateProfileLink()
 }
 
-/* ================= WELCOME SCREEN ================= */
 function showWelcomeScreen() {
-    const container = document.querySelector(".container")
-    const welcomeScreen = document.getElementById("welcome-screen")
+    const container = document.querySelector(".container");
     
-    if (welcomeScreen) {
-        container.style.display = "none"
-        welcomeScreen.style.display = "flex"
-    } else {
-        container.innerHTML = `
-        <div class="welcome-screen" id="welcome-screen">
-            <div class="minimal-card">
-                <div class="minimal-logo">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="24" cy="24" r="20" stroke="#4CAF50" stroke-width="2" stroke-dasharray="4 4"/>
-                        <circle cx="24" cy="24" r="8" fill="#4CAF50"/>
-                    </svg>
-                </div>
-
-                <h1 class="minimal-title">DotMe</h1>
-                <p class="minimal-subtitle">One link for everything you are</p>
-
-                <div class="minimal-buttons">
-                    <a href="/admin/dashboard.html" class="minimal-btn-primary">
-                        Create your page
-                    </a>
-                    <a href="/admin/login.html" class="minimal-btn-secondary">
-                        Sign in
-                    </a>
-                </div>
-
-                <p class="minimal-footer">
-                    Free • Customizable • No ads
-                </p>
+    // إخفاء المحتوى العادي
+    if (container) container.style.display = "none";
+    
+    // التحقق إذا كانت الشاشة موجودة مسبقاً
+    let welcomeScreen = document.getElementById("welcome-screen");
+    if (!welcomeScreen) {
+        welcomeScreen = document.createElement("div");
+        welcomeScreen.id = "welcome-screen";
+        welcomeScreen.className = "welcome-screen";
+        welcomeScreen.innerHTML = `
+            <div class="welcome-content">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="24" r="20" stroke="#4CAF50" stroke-width="2" stroke-dasharray="4 4"/>
+                    <circle cx="24" cy="24" r="8" fill="#4CAF50"/>
+                </svg>
+                <h1>DotMe</h1>
+                <p>One link for everything you are</p>
+                <a href="/admin/dashboard.html" class="btn">Create your page</a>
+                <p class="footer">Free • Customizable • No ads</p>
             </div>
-        </div>
-        `
+        `;
+        document.body.appendChild(welcomeScreen);
+    } else {
+        welcomeScreen.style.display = "flex";
     }
+    
+    // منع التمرير
+    document.body.classList.add('welcome-active');
 }
 
 /* ================= UPDATE PROFILE LINK ================= */

@@ -1331,6 +1331,8 @@ body.sunset .link:hover span {
     }
 }
 
+
+
 /* ================= TOUCH OPTIMIZATIONS ================= */
 @media (hover: none) and (pointer: coarse) {
     .circle-btn:hover,
@@ -1388,7 +1390,86 @@ body.sunset .link:hover span {
         border: 2px solid #000 !important;
     }
 }
+/* ================= WELCOME SCREEN - FULLSCREEN SIMPLE ================= */
+.welcome-screen {
+    height: 100vh;               /* يملأ الشاشة كاملة */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #1e293b;               /* لون النص الأساسي */
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
 
+/* منع التمرير على الجسم */
+body.welcome-active {
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* محتوى الشاشة بدون أي بطاقة */
+.welcome-content {
+    max-width: 500px;
+    width: 100%;
+}
+
+.welcome-content svg {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+}
+
+.welcome-content svg circle:first-child {
+    stroke: #4CAF50;
+}
+
+.welcome-content svg circle:last-child {
+    fill: #4CAF50;
+}
+
+.welcome-content h1 {
+    font-size: 40px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 15px;
+}
+
+.welcome-content p {
+    font-size: 18px;
+    color: #475569;
+    margin-bottom: 30px;
+}
+
+.welcome-content .btn {
+    display: inline-block;
+    padding: 16px 40px;
+    background: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 60px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+    transition: all 0.3s ease;
+}
+
+.welcome-content .btn:hover {
+    transform: translateY(-2px);
+    background: #45a049;
+    box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+}
+
+.welcome-content .footer {
+    margin-top: 40px;
+    font-size: 14px;
+    color: #94a3b8;
+}
 /* ================= UTILITY CLASSES ================= */
 .text-center { text-align: center; }
 .hidden { display: none !important; }
