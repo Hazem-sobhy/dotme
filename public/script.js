@@ -352,6 +352,7 @@ function initTooltips() {
 /* ================= HELPER FUNCTIONS ================= */
 
 function escapeHtml(unsafe) {
+    unsafe = String(unsafe || "")
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -361,7 +362,7 @@ function escapeHtml(unsafe) {
 }
 
 function getIcon(name) {
-    name = name.toLowerCase().trim()
+    name = String(name || "").toLowerCase().trim()
 
     const icons = {
         "whatsapp": "icons/whatsapp.png",

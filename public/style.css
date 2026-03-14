@@ -1390,6 +1390,13 @@ body.sunset .link:hover span {
         border: 2px solid #000 !important;
     }
 }
+.icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
 /* ================= WELCOME SCREEN - FULLSCREEN SIMPLE ================= */
 .welcome-screen {
     height: 100vh;               /* يملأ الشاشة كاملة */
@@ -1509,10 +1516,13 @@ body.welcome-active {
 /* منع أي عناصر أخرى من التغطية */
 .cover,
 .cover::after,
-.avatar,
-.container,
 .cyberpunk-lights {
     pointer-events: none !important;
+}
+
+/* تأكيد أن الحاوية الرئيسية تسمح بالنقر */
+.container {
+    pointer-events: auto !important;
 }
 
 /* إزالة backdrop-filter مؤقتاً للتأكد من عدم وجود منع */
