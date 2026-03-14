@@ -1,36 +1,44 @@
-/* 
-==================================================
-  ULTIMATE PROFILE CARD - MULTI THEME EDITION
-  Version: 4.1 (Mobile Optimized)
-  Description: بطاقة تعريفية متكاملة مع تحسينات الموبايل
-==================================================
-*/
+/* ==================================================
+   ULTIMATE PROFILE CARD - MULTI THEME EDITION v5.0
+   Mobile Optimized | Taplink & Treelink Inspired
+   ================================================== */
 
 /* ================= FONTS & VARIABLES ================= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root {
-    /* الألوان الأساسية */
+    /* Core Colors */
     --primary-color: #4CAF50;
     --bg-color: #ffffff;
     --text-color: #1e293b;
+    --text-light: #64748b;
     --border-radius: 16px;
-    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     
-    /* ظلال موحدة */
-    --shadow-sm: 0 10px 25px rgba(0,0,0,0.1);
-    --shadow-md: 0 15px 35px rgba(0,0,0,0.15);
-    --shadow-lg: 0 25px 50px rgba(0,0,0,0.2);
+    /* Shadows */
+    --shadow-xs: 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-sm: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
+    --shadow-lg: 0 16px 32px rgba(0,0,0,0.16);
+    --shadow-xl: 0 24px 48px rgba(0,0,0,0.2);
     --shadow-hover: 0 30px 60px rgba(0,0,0,0.25);
     
-    /* مدة الأنيميشن */
-    --transition-fast: 0.2s ease;
+    /* Animations */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --transition-slow: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    
+    /* Z-index layers */
+    --z-below: -1;
+    --z-normal: 1;
+    --z-above: 10;
+    --z-dropdown: 100;
+    --z-modal: 1000;
+    --z-toast: 2000;
 }
 
-/* ================= BASE STYLES ================= */
+/* ================= RESET & BASE ================= */
 *,
 *::before,
 *::after {
@@ -39,31 +47,41 @@
     box-sizing: border-box;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
     color: var(--text-color);
     min-height: 100vh;
     margin: 0;
-    display: grid;
-    place-items: center;
-    transition: background 0.4s ease, color 0.3s ease;
-    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.4s ease, color 0.3s ease;
     line-height: 1.5;
+    overflow-x: hidden;
 }
 
-/* ================= CONTAINER - محسن للموبايل ================= */
+/* ================= CONTAINER ================= */
 .container {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     margin: 20px auto;
     text-align: center;
     position: relative;
-    padding-bottom: 30px;
-    animation: floatIn 0.8s var(--transition-slow);
+    background: white;
     border-radius: 40px;
     overflow: hidden;
-    background: white; /* افتراضي */
+    box-shadow: var(--shadow-lg);
+    animation: floatIn 0.6s var(--transition-slow) forwards;
+    transform: translateY(0);
+    transition: all var(--transition-normal);
 }
 
 @keyframes floatIn {
@@ -77,13 +95,13 @@ body {
     }
 }
 
-/* ================= COVER IMAGE ================= */
+/* ================= COVER ================= */
 .cover {
-    height: 180px;
+    height: 200px;
     border-radius: 0 0 40px 40px;
     overflow: hidden;
     position: relative;
-    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, var(--primary-color), #2196F3);
 }
 
 .cover::after {
@@ -92,6 +110,7 @@ body {
     inset: 0;
     background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
     pointer-events: none;
+    z-index: var(--z-normal);
 }
 
 .cover img {
@@ -99,6 +118,7 @@ body {
     height: 100%;
     object-fit: cover;
     transition: transform 0.6s var(--transition-slow);
+    will-change: transform;
 }
 
 .cover:hover img {
@@ -107,17 +127,18 @@ body {
 
 /* ================= AVATAR ================= */
 .avatar {
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     border: 5px solid white;
-    margin-top: -65px;
+    margin-top: -70px;
     object-fit: cover;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     transition: all 0.4s var(--transition-normal);
     position: relative;
-    z-index: 10;
+    z-index: var(--z-above);
     background: white;
+    will-change: transform;
 }
 
 .avatar:hover {
@@ -127,29 +148,30 @@ body {
 
 /* ================= TYPOGRAPHY ================= */
 h1 {
-    margin: 15px 0 5px;
-    font-size: 28px;
+    margin: 20px 0 8px;
+    font-size: clamp(24px, 6vw, 28px);
     font-weight: 800;
     letter-spacing: -0.5px;
-    padding: 0 15px;
+    padding: 0 20px;
     word-break: break-word;
+    line-height: 1.3;
 }
 
 #title {
-    color: #64748b;
+    color: var(--text-light);
     margin: 0;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: clamp(14px, 4vw, 15px);
+    font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    padding: 0 15px;
+    padding: 0 20px;
 }
 
 .bio {
-    margin: 15px auto 0;
-    font-size: 14px;
-    opacity: 0.8;
-    padding: 0 20px;
+    margin: 16px auto 0;
+    font-size: clamp(14px, 4vw, 15px);
+    opacity: 0.85;
+    padding: 0 24px;
     line-height: 1.6;
     max-width: 100%;
     word-break: break-word;
@@ -157,27 +179,29 @@ h1 {
 
 /* ================= CONTACT BUTTONS ================= */
 .contact-buttons {
-    margin-top: 25px;
+    margin-top: 28px;
     display: flex;
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
-    padding: 0 15px;
+    padding: 0 20px;
 }
 
 .circle-btn {
-    width: 58px;
-    height: 58px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s var(--transition-normal);
     text-decoration: none;
     position: relative;
     overflow: hidden;
+    border: none;
+    cursor: pointer;
 }
 
 .circle-btn::before {
@@ -188,9 +212,10 @@ h1 {
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.5);
     transform: translate(-50%, -50%);
     transition: width 0.5s, height 0.5s;
+    z-index: 1;
 }
 
 .circle-btn:hover::before {
@@ -198,8 +223,8 @@ h1 {
     height: 120px;
 }
 
-.circle-btn i {
-    font-size: 24px;
+.circle-btn .material-symbols-outlined {
+    font-size: 28px;
     color: var(--primary-color);
     transition: transform 0.3s ease;
     position: relative;
@@ -209,10 +234,10 @@ h1 {
 .circle-btn:hover {
     transform: scale(1.15) translateY(-5px);
     background: var(--primary-color) !important;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
 }
 
-.circle-btn:hover i {
+.circle-btn:hover .material-symbols-outlined {
     transform: scale(1.1);
     color: white !important;
 }
@@ -221,10 +246,10 @@ h1 {
 .save-btn {
     margin: 30px auto 0;
     padding: 16px 32px;
-    width: calc(100% - 40px);
+    width: calc(100% - 48px);
     max-width: 320px;
     border: none;
-    border-radius: 50px;
+    border-radius: 60px;
     background: var(--primary-color);
     color: white;
     font-size: 16px;
@@ -235,7 +260,16 @@ h1 {
     overflow: hidden;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.save-btn .material-symbols-outlined {
+    font-size: 22px;
+    transition: transform 0.3s ease;
 }
 
 .save-btn::after {
@@ -258,133 +292,23 @@ h1 {
 
 .save-btn:hover {
     transform: scale(1.03) translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
+}
+
+.save-btn:hover .material-symbols-outlined {
+    transform: translateY(-2px);
 }
 
 .save-btn:active {
     transform: scale(0.98);
 }
 
-/* ================= WELCOME SCREEN (MINIMAL) ================= */
-.welcome-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-    z-index: 9999;
-    margin: 0;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.minimal-card {
-    max-width: 380px;
-    width: 100%;
-    text-align: center;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
-}
-
-/* Logo */
-.minimal-logo {
-    margin-bottom: 32px;
-}
-
-.minimal-logo svg {
-    width: 56px;
-    height: 56px;
-}
-
-/* Typography */
-.minimal-title {
-    font-size: clamp(24px, 8vw, 32px);
-    font-weight: 600;
-    color: #111827;
-    margin: 0 0 8px;
-    letter-spacing: -0.5px;
-    word-break: break-word;
-}
-
-.minimal-subtitle {
-    font-size: clamp(14px, 4vw, 16px);
-    color: #6B7280;
-    margin: 0 0 40px;
-    line-height: 1.5;
-    padding: 0 10px;
-}
-
-/* Buttons */
-.minimal-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 32px;
-    padding: 0 10px;
-}
-
-.minimal-btn-primary,
-.minimal-btn-secondary {
-    padding: 14px 24px;
-    border-radius: 12px;
-    font-size: clamp(14px, 4vw, 16px);
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.minimal-btn-primary {
-    background: #111827;
-    color: white;
-    border: 1px solid #111827;
-}
-
-.minimal-btn-primary:hover {
-    background: #1F2937;
-    transform: translateY(-1px);
-}
-
-.minimal-btn-secondary {
-    background: transparent;
-    color: #111827;
-    border: 1px solid #E5E7EB;
-}
-
-.minimal-btn-secondary:hover {
-    background: #F9FAFB;
-    border-color: #D1D5DB;
-}
-
-/* Footer */
-.minimal-footer {
-    font-size: clamp(12px, 3.5vw, 14px);
-    color: #9CA3AF;
-    margin: 0;
-    padding: 16px 10px 0;
-    border-top: 1px solid #F3F4F6;
-}
-
-/* ================= LINKS GRID - محسن للموبايل ================= */
+/* ================= LINKS GRID ================= */
 .links {
-    margin: 35px 15px 0;
+    margin: 35px 20px 25px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 15px;
+    gap: 16px;
     padding: 25px 15px;
     border-radius: 30px;
     background: rgba(255, 255, 255, 0.05);
@@ -397,6 +321,9 @@ h1 {
     animation: linkAppear 0.5s ease-out forwards;
     opacity: 0;
     transform: translateY(20px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 @keyframes linkAppear {
@@ -406,7 +333,7 @@ h1 {
     }
 }
 
-/* تأخير ظهور كل رابط */
+/* Animation delays */
 .link:nth-child(1) { animation-delay: 0.1s; }
 .link:nth-child(2) { animation-delay: 0.15s; }
 .link:nth-child(3) { animation-delay: 0.2s; }
@@ -416,17 +343,19 @@ h1 {
 .link:nth-child(7) { animation-delay: 0.4s; }
 .link:nth-child(8) { animation-delay: 0.45s; }
 .link:nth-child(9) { animation-delay: 0.5s; }
+.link:nth-child(10) { animation-delay: 0.55s; }
 
 .link img {
     width: 100%;
     max-width: 85px;
     height: auto;
     aspect-ratio: 1/1;
-    border-radius: 50%;
+    border-radius: var(--border-radius);
     object-fit: cover;
     box-shadow: var(--shadow-sm);
     transition: all 0.4s var(--transition-normal);
     border: 3px solid transparent;
+    background: white;
 }
 
 .link:hover img {
@@ -437,10 +366,10 @@ h1 {
 
 .link span {
     display: block;
-    margin-top: 8px;
+    margin-top: 10px;
     color: inherit;
-    font-weight: 500;
-    font-size: clamp(11px, 3vw, 13px);
+    font-weight: 600;
+    font-size: clamp(12px, 3vw, 13px);
     transition: color 0.3s ease;
     word-break: break-word;
     padding: 0 5px;
@@ -455,29 +384,36 @@ h1 {
     position: absolute;
     top: 20px;
     left: 20px;
+    right: 20px;
     display: flex;
-    gap: 12px;
-    z-index: 100;
+    justify-content: space-between;
+    z-index: var(--z-dropdown);
+    pointer-events: none;
+}
+
+.top-bar button {
+    pointer-events: auto;
 }
 
 .icon-btn {
     background: rgba(255, 255, 255, 0.2);
     border: none;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     color: white;
     cursor: pointer;
     transition: all 0.25s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
-.icon-btn i {
-    font-size: 18px;
+.icon-btn .material-symbols-outlined {
+    font-size: 24px;
     color: white;
     transition: transform 0.3s ease;
 }
@@ -485,32 +421,35 @@ h1 {
 .icon-btn:hover {
     transform: scale(1.1) rotate(5deg);
     background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
-.icon-btn:hover i {
+.icon-btn:hover .material-symbols-outlined {
     transform: rotate(90deg);
 }
 
-/* ================= DROPDOWN MENUS - محسن للموبايل ================= */
+/* ================= DROPDOWN MENUS ================= */
 .menu-dropdown,
 .share-menu {
     display: none;
     position: absolute;
-    top: 55px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: var(--shadow-lg);
+    top: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
     overflow: hidden;
-    min-width: 180px;
+    min-width: 200px;
     max-width: 90vw;
     animation: dropdownAppear 0.3s var(--transition-normal);
-    z-index: 1000;
+    z-index: var(--z-dropdown);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 @keyframes dropdownAppear {
     from {
         opacity: 0;
-        transform: translateY(-15px);
+        transform: translateY(-20px);
     }
     to {
         opacity: 1;
@@ -530,22 +469,22 @@ h1 {
 
 .menu-dropdown a,
 .share-menu button {
-    display: block;
-    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
     border: none;
     background: transparent;
     text-decoration: none;
     cursor: pointer;
     width: 100%;
     text-align: left;
-    font-size: clamp(13px, 4vw, 14px);
+    font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     color: #333;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .menu-dropdown a:last-child,
@@ -560,16 +499,26 @@ h1 {
     padding-left: 30px;
 }
 
-/* ================= QR MODAL - محسن للموبايل ================= */
+.menu-dropdown .material-symbols-outlined,
+.share-menu .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+/* Register link special style */
+.register-link {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+/* ================= QR MODAL ================= */
 .qr-modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(15px);
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: var(--z-modal);
     animation: modalFadeIn 0.3s ease;
     padding: 20px;
 }
@@ -581,14 +530,15 @@ h1 {
 
 .qr-content {
     background: white;
-    padding: clamp(20px, 5vw, 40px);
-    border-radius: 40px;
+    padding: clamp(25px, 5vw, 40px);
+    border-radius: 48px;
     text-align: center;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     transform: scale(0.9);
     animation: modalScaleIn 0.4s var(--transition-normal) forwards;
     width: 100%;
     max-width: 400px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
 @keyframes modalScaleIn {
@@ -600,15 +550,15 @@ h1 {
     max-width: 250px;
     height: auto;
     aspect-ratio: 1/1;
-    border-radius: 20px;
+    border-radius: 24px;
     margin-bottom: 20px;
+    box-shadow: var(--shadow-lg);
 }
 
 .qr-buttons {
     display: flex;
     gap: 15px;
     margin-top: 25px;
-    flex-direction: row;
 }
 
 @media (max-width: 420px) {
@@ -620,15 +570,19 @@ h1 {
 .qr-share,
 .qr-close {
     flex: 1;
-    padding: 14px 20px;
+    padding: 16px 20px;
     border: none;
-    border-radius: 50px;
-    font-size: clamp(13px, 4vw, 14px);
+    border-radius: 40px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s var(--transition-normal);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .qr-share {
@@ -647,10 +601,15 @@ h1 {
 .qr-close:hover {
     transform: translateY(-3px);
     filter: brightness(1.1);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-xl);
 }
 
-/* ================= TOAST NOTIFICATION ================= */
+.qr-share .material-symbols-outlined,
+.qr-close .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* ================= TOAST ================= */
 #toast {
     position: fixed;
     bottom: 30px;
@@ -659,29 +618,19 @@ h1 {
     background: rgba(33, 33, 33, 0.95);
     backdrop-filter: blur(10px);
     color: white;
-    padding: 14px 28px;
-    border-radius: 50px;
-    font-size: clamp(13px, 4vw, 14px);
+    padding: 16px 32px;
+    border-radius: 60px;
+    font-size: 14px;
     font-weight: 500;
-    box-shadow: var(--shadow-lg);
-    z-index: 3000;
+    box-shadow: var(--shadow-xl);
+    z-index: var(--z-toast);
     opacity: 0;
     transition: all 0.4s var(--transition-normal);
     border: 1px solid rgba(255, 255, 255, 0.1);
     width: fit-content;
     max-width: 90vw;
     text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-@media (max-width: 420px) {
-    #toast {
-        white-space: normal;
-        word-break: break-word;
-        max-width: calc(100vw - 40px);
-    }
+    pointer-events: none;
 }
 
 #toast.show {
@@ -691,13 +640,14 @@ h1 {
 
 /* ================= LOADING SPINNER ================= */
 .spinner {
-    width: 45px;
-    height: 45px;
-    border: 4px solid rgba(76, 175, 80, 0.2);
-    border-top-color: var(--primary-color);
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(76, 175, 80, 0.1);
+    border-left-color: var(--primary-color);
+    border-right-color: var(--primary-color);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 30px auto;
+    animation: spin 1s linear infinite;
+    margin: 40px auto;
 }
 
 @keyframes spin {
@@ -708,23 +658,117 @@ h1 {
     grid-column: 1 / -1;
     text-align: center;
     padding: 40px 20px;
-    color: #999;
-    font-size: clamp(13px, 4vw, 14px);
+    color: var(--text-light);
+    font-size: 15px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.05);
+    border-radius: 30px;
+}
+
+/* ================= REVEAL ON SCROLL ================= */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ================= ERROR PAGE ================= */
+.error-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.error-content {
+    text-align: center;
+    background: rgba(255,255,255,0.95);
+    padding: 40px;
+    border-radius: 30px;
+    box-shadow: var(--shadow-xl);
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+}
+
+.error-content h1 {
+    font-size: 80px;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.error-content h2 {
+    font-size: 24px;
+    margin: 10px 0;
+    color: #333;
+}
+
+.error-content p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.error-btn {
+    display: inline-block;
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.error-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+}
+
+/* ================= CYBERPUNK LIGHTS (for neon theme) ================= */
+.cyberpunk-lights {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--z-below);
+    display: none;
+}
+
+body.neon .cyberpunk-lights {
+    display: block;
+    background: radial-gradient(circle at 20% 30%, #ff00ff33 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, #00ffff33 0%, transparent 30%),
+                radial-gradient(circle at 40% 80%, #ffff0033 0%, transparent 30%);
+    animation: lightsPulse 4s ease-in-out infinite;
+}
+
+@keyframes lightsPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 /* ================= SCROLLBAR ================= */
 ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--primary-color);
     border-radius: 10px;
-    opacity: 0.5;
+    opacity: 0.7;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -732,11 +776,9 @@ h1 {
     filter: brightness(1.1);
 }
 
-/* ==============================================
-   ============== THEMES SECTION ================
-   ============================================== */
+/* ================= THEMES ================= */
 
-/* ===== THEME 1: DARK MODERN ===== */
+/* THEME 1: DARK MODERN */
 body.dark {
     background: linear-gradient(135deg, #0f172a, #020617);
     color: #f1f5f9;
@@ -760,11 +802,11 @@ body.dark .circle-btn {
     background: #1f2937;
 }
 
-body.dark .circle-btn i {
+body.dark .circle-btn .material-symbols-outlined {
     color: #e2e8f0;
 }
 
-body.dark .circle-btn:hover i {
+body.dark .circle-btn:hover .material-symbols-outlined {
     color: white;
 }
 
@@ -782,7 +824,7 @@ body.dark .icon-btn {
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* ===== THEME 2: LIGHT CLEAN ===== */
+/* THEME 2: LIGHT CLEAN */
 body.light {
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
     color: #0f172a;
@@ -790,7 +832,7 @@ body.light {
 
 body.light .container {
     background: white;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
 }
 
 body.light .links {
@@ -801,10 +843,10 @@ body.light .links {
 body.light .circle-btn,
 body.light .icon-btn {
     background: white;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
 }
 
-body.light .icon-btn i {
+body.light .icon-btn .material-symbols-outlined {
     color: #0f172a;
 }
 
@@ -812,11 +854,11 @@ body.light .icon-btn:hover {
     background: var(--primary-color);
 }
 
-body.light .icon-btn:hover i {
+body.light .icon-btn:hover .material-symbols-outlined {
     color: white;
 }
 
-/* ===== THEME 3: AURORA BOREALIS ===== */
+/* THEME 3: AURORA BOREALIS */
 body.aurora {
     color: white;
     background: 
@@ -863,11 +905,11 @@ body.aurora .circle-btn {
     backdrop-filter: blur(5px);
 }
 
-body.aurora .circle-btn i {
+body.aurora .circle-btn .material-symbols-outlined {
     color: white;
 }
 
-/* ================= APPLE MINIMAL LAYOUT ================= */
+/* THEME 4: MINIMAL (Apple-like) */
 body.minimal {
     background: #f5f5f7;
     color: #1d1d1f;
@@ -875,7 +917,6 @@ body.minimal {
 
 body.minimal .container {
     max-width: 520px;
-    width: 100%;
     background: transparent;
     box-shadow: none;
     border: none;
@@ -888,14 +929,15 @@ body.minimal .cover {
 }
 
 body.minimal .avatar {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
     border: 4px solid white;
-    margin-top: -45px;
+    margin-top: -50px;
 }
 
 body.minimal h1 {
-    font-size: clamp(20px, 6vw, 24px);
+    font-size: clamp(22px, 6vw, 24px);
+    font-weight: 600;
 }
 
 body.minimal #title {
@@ -905,49 +947,54 @@ body.minimal #title {
 body.minimal .save-btn {
     background: #0071e3;
     border-radius: 14px;
+    text-transform: none;
+    font-weight: 500;
 }
 
 body.minimal .links {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     padding: 0 15px;
     background: transparent;
-    margin: 35px 15px 0;
+    margin: 35px 15px 25px;
 }
 
 body.minimal .link {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 16px;
     background: white;
-    padding: 14px 18px;
+    padding: 16px 20px;
     border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-    transition: .2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
 }
 
 body.minimal .link:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 body.minimal .link img {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
+    max-width: none;
     border-radius: 12px;
+    margin: 0;
 }
 
 body.minimal .link span {
-    font-size: clamp(14px, 4vw, 16px);
-    font-weight: 500;
     margin-top: 0;
+    font-size: 16px;
+    font-weight: 500;
 }
 
-/* ===== HACKER MOVIE THEME ===== */
+/* THEME 5: NEON HACKER */
 body.neon {
-    background: #020402;
-    color: #9aff9a;
-    font-family: "Share Tech Mono", monospace;
+    background: #030014;
+    color: #00ff9d;
+    font-family: 'Share Tech Mono', monospace;
     position: relative;
     overflow-x: hidden;
 }
@@ -956,9 +1003,12 @@ body.neon::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-image: radial-gradient(#00ff9c33 1px, transparent 1px);
-    background-size: 4px 4px;
-    opacity: .15;
+    background-image: 
+        radial-gradient(#00ff9d 1px, transparent 1px),
+        radial-gradient(#00ff9d 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    opacity: 0.1;
     z-index: -2;
 }
 
@@ -968,8 +1018,8 @@ body.neon::after {
     inset: 0;
     background: repeating-linear-gradient(
         0deg,
-        rgba(0,255,150,.03),
-        rgba(0,255,150,.03) 2px,
+        rgba(0, 255, 157, 0.03) 0px,
+        rgba(0, 255, 157, 0.03) 2px,
         transparent 2px,
         transparent 4px
     );
@@ -978,58 +1028,75 @@ body.neon::after {
 }
 
 body.neon .container {
-    background: rgba(0,10,0,.7);
-    border: 1px solid #00ff9c;
-    box-shadow: 0 0 20px #00ff9c44, inset 0 0 30px #00ff9c22;
-    backdrop-filter: blur(3px);
+    background: rgba(0, 20, 10, 0.8);
+    border: 1px solid #00ff9d;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3), inset 0 0 30px rgba(0, 255, 157, 0.1);
+    backdrop-filter: blur(5px);
 }
 
 body.neon .avatar {
-    border: 2px solid #00ff9c;
-    box-shadow: 0 0 15px #00ff9c;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 20px #00ff9d;
 }
 
 body.neon h1 {
-    color: #00ff9c;
-    text-shadow: 0 0 10px #00ff9c;
+    color: #00ff9d;
+    text-shadow: 0 0 10px #00ff9d;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body.neon #title {
+    color: #00ff9d;
+    opacity: 0.7;
 }
 
 body.neon .link {
-    border-bottom: 1px solid #00ff9c33;
+    border-bottom: 1px solid rgba(0, 255, 157, 0.2);
     padding: 12px;
 }
 
 body.neon .link span::before {
     content: "> ";
-    color: #00ff9c;
+    color: #00ff9d;
 }
 
 body.neon .link:hover {
-    background: #001a00;
+    background: rgba(0, 255, 157, 0.05);
 }
 
 body.neon .save-btn {
-    background: #001a00;
-    border: 1px solid #00ff9c;
-    color: #00ff9c;
+    background: transparent;
+    border: 1px solid #00ff9d;
+    color: #00ff9d;
+    text-transform: none;
+    font-family: 'Share Tech Mono', monospace;
+    box-shadow: 0 0 10px #00ff9d;
 }
 
 body.neon .save-btn:hover {
-    background: #00ff9c;
-    color: #001100;
+    background: #00ff9d;
+    color: #030014;
+    box-shadow: 0 0 30px #00ff9d;
 }
 
 body.neon .icon-btn {
-    border: 1px solid #00ff9c;
-    background: #001100;
+    border: 1px solid #00ff9d;
+    background: rgba(0, 20, 10, 0.5);
+}
+
+body.neon .icon-btn .material-symbols-outlined {
+    color: #00ff9d;
 }
 
 body.neon .icon-btn:hover {
-    background: #00ff9c;
-    color: #001100;
+    background: #00ff9d;
 }
 
-/* ===== THEME 5: GLASSMORPHISM ===== */
+body.neon .icon-btn:hover .material-symbols-outlined {
+    color: #030014;
+}
+
+/* THEME 6: GLASSMORPHISM */
 body.glass {
     background: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070') center/cover fixed;
     color: white;
@@ -1040,8 +1107,8 @@ body.glass::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(15px);
     z-index: -1;
 }
 
@@ -1062,7 +1129,7 @@ body.glass .circle-btn {
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-body.glass .circle-btn i {
+body.glass .circle-btn .material-symbols-outlined {
     color: white;
 }
 
@@ -1070,13 +1137,14 @@ body.glass .save-btn {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
 }
 
 body.glass .save-btn:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* ===== THEME 6: SUNSET VIBES ===== */
+/* THEME 7: SUNSET VIBES */
 body.sunset {
     background: linear-gradient(135deg, #ff6b6b, #feca57, #ff9f43);
     background-size: 300% 300%;
@@ -1110,7 +1178,7 @@ body.sunset .circle-btn {
     backdrop-filter: blur(5px);
 }
 
-body.sunset .circle-btn i {
+body.sunset .circle-btn .material-symbols-outlined {
     color: #2d3436;
 }
 
@@ -1118,56 +1186,57 @@ body.sunset .link:hover span {
     color: #ff6b6b;
 }
 
-/* ================= RESPONSIVE DESIGN - محسن بالكامل ================= */
+/* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 480px) {
     .container {
         margin: 10px auto;
         border-radius: 30px;
+        max-width: calc(100% - 20px);
     }
     
     .cover {
-        height: 150px;
+        height: 160px;
         border-radius: 0 0 30px 30px;
     }
     
     .avatar {
-        width: 110px;
-        height: 110px;
-        margin-top: -55px;
+        width: 120px;
+        height: 120px;
+        margin-top: -60px;
         border-width: 4px;
     }
     
     h1 {
-        font-size: clamp(20px, 6vw, 24px);
-        margin: 12px 0 4px;
+        font-size: 22px;
+        margin: 16px 0 6px;
     }
     
     #title {
-        font-size: clamp(12px, 3.5vw, 14px);
+        font-size: 13px;
     }
     
     .bio {
-        padding: 0 15px;
-        font-size: clamp(12px, 3.5vw, 13px);
+        padding: 0 16px;
+        font-size: 13px;
         margin: 12px auto 0;
     }
     
     .contact-buttons {
         gap: 15px;
-        margin-top: 20px;
+        margin-top: 22px;
     }
     
     .circle-btn {
-        width: 50px;
-        height: 50px;
+        width: 52px;
+        height: 52px;
     }
     
-    .circle-btn i {
-        font-size: 20px;
+    .circle-btn .material-symbols-outlined {
+        font-size: 24px;
     }
     
     .links {
-        margin: 25px 10px 0;
+        margin: 25px 12px 20px;
         gap: 12px;
         padding: 20px 10px;
     }
@@ -1177,36 +1246,44 @@ body.sunset .link:hover span {
     }
     
     .save-btn {
-        width: calc(100% - 30px);
-        padding: 14px 20px;
-        font-size: clamp(14px, 4vw, 15px);
+        width: calc(100% - 32px);
+        padding: 14px 24px;
+        font-size: 14px;
         margin: 25px auto 0;
     }
     
     .top-bar {
         top: 15px;
         left: 15px;
-        gap: 10px;
+        right: 15px;
     }
     
     .icon-btn {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
     }
     
-    .icon-btn i {
-        font-size: 16px;
+    .icon-btn .material-symbols-outlined {
+        font-size: 22px;
     }
     
     .menu-dropdown,
     .share-menu {
-        min-width: 160px;
+        min-width: 180px;
     }
     
     .menu-dropdown a,
     .share-menu button {
-        padding: 12px 16px;
+        padding: 14px 20px;
         font-size: 13px;
+    }
+    
+    .qr-content {
+        padding: 20px;
+    }
+    
+    .qr-content img {
+        max-width: 200px;
     }
 }
 
@@ -1216,14 +1293,13 @@ body.sunset .link:hover span {
     }
     
     .cover {
-        height: 130px;
-        border-radius: 0 0 25px 25px;
+        height: 140px;
     }
     
     .avatar {
-        width: 95px;
-        height: 95px;
-        margin-top: -47px;
+        width: 100px;
+        height: 100px;
+        margin-top: -50px;
         border-width: 3px;
     }
     
@@ -1245,21 +1321,17 @@ body.sunset .link:hover span {
     }
     
     .circle-btn {
-        width: 45px;
-        height: 45px;
-    }
-    
-    .circle-btn i {
-        font-size: 18px;
+        width: 48px;
+        height: 48px;
     }
     
     .save-btn {
-        padding: 12px 16px;
+        padding: 12px 20px;
         font-size: 13px;
     }
 }
 
-/* تحسين اللمس للموبايل */
+/* ================= TOUCH OPTIMIZATIONS ================= */
 @media (hover: none) and (pointer: coarse) {
     .circle-btn:hover,
     .link:hover img,
@@ -1280,7 +1352,11 @@ body.sunset .link:hover span {
     .share-menu button,
     .qr-share,
     .qr-close {
-        padding: 16px 20px;
+        padding: 16px 24px;
+    }
+    
+    .save-btn {
+        padding: 18px 28px;
     }
 }
 
@@ -1295,7 +1371,8 @@ body.sunset .link:hover span {
     .contact-buttons,
     .save-btn,
     .qr-modal,
-    #toast {
+    #toast,
+    .cyberpunk-lights {
         display: none !important;
     }
     
@@ -1304,5 +1381,65 @@ body.sunset .link:hover span {
         border: 1px solid #ddd !important;
         max-width: 100%;
         margin: 0;
+        page-break-inside: avoid;
     }
+    
+    .avatar {
+        border: 2px solid #000 !important;
+    }
+}
+
+/* ================= UTILITY CLASSES ================= */
+.text-center { text-align: center; }
+.hidden { display: none !important; }
+.invisible { visibility: hidden; }
+.no-select { user-select: none; }
+.pointer { cursor: pointer; }
+/* ================= FIX CLICK ISSUES ================= */
+/* تأكيد أن القائمة وفوق كل العناصر */
+.menu-dropdown,
+.share-menu {
+    pointer-events: auto !important;
+    z-index: 2147483647 !important; /* أقصى قيمة */
+}
+
+/* كل الروابط داخل القائمة تكون قابلة للنقر */
+.menu-dropdown a,
+.menu-dropdown button,
+.share-menu button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative;
+    z-index: 2147483647 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* إزالة أي pointer-events: none من العناصر الأب */
+.top-bar {
+    pointer-events: none; /* يسمح بالنقر عبر المساحة الفارغة */
+}
+
+.top-bar button,
+.top-bar a {
+    pointer-events: auto !important; /* ولكن الأزرار نفسها تستقبل النقر */
+}
+
+/* منع أي عناصر أخرى من التغطية */
+.cover,
+.cover::after,
+.avatar,
+.container,
+.cyberpunk-lights {
+    pointer-events: none !important;
+}
+
+/* إزالة backdrop-filter مؤقتاً للتأكد من عدم وجود منع */
+.menu-dropdown {
+    backdrop-filter: none !important;
+    background: white !important;
+}
+
+body.dark .menu-dropdown {
+    background: #1e293b !important;
 }

@@ -1,7 +1,6 @@
 /* ================= LOAD PROFILE ================= */
 
 async function load() {
-
     showLoading()
 
     const username = window.location.pathname.replace("/", "")
@@ -144,9 +143,12 @@ function renderProfile(data) {
     
     initTooltips()
     prefetchLinks()
+    
+    // ✅ تحديث رابط Profile
+    updateProfileLink()
 }
 
-/* ================= WELCOME SCREEN (Check if logged in) ================= */
+/* ================= WELCOME SCREEN ================= */
 function showWelcomeScreen() {
     const container = document.querySelector(".container")
     const welcomeScreen = document.getElementById("welcome-screen")
@@ -172,7 +174,7 @@ function showWelcomeScreen() {
                     <a href="/admin/dashboard.html" class="minimal-btn-primary">
                         Create your page
                     </a>
-                    <a href="/admin/dashboard.html" class="minimal-btn-secondary">
+                    <a href="/admin/login.html" class="minimal-btn-secondary">
                         Sign in
                     </a>
                 </div>
@@ -186,6 +188,16 @@ function showWelcomeScreen() {
     }
 }
 
+/* ================= UPDATE PROFILE LINK ================= */
+function updateProfileLink() {
+    const profileLink = document.getElementById('profileLink');
+    if (!profileLink) return;
+    
+    const username = window.location.pathname.replace("/", "");
+    if (username && !username.startsWith('api/') && !username.startsWith('admin/')) {
+        profileLink.href = `/admin/dashboard.html?user=${username}`;
+    }
+}
 
 /* ================= APPLY CUSTOMIZATIONS ================= */
 
@@ -411,11 +423,21 @@ END:VCARD`
 /* ================= MENU ================= */
 
 function toggleMenu() {
-    const menu = document.getElementById("menuDropdown")
-    const share = document.getElementById("shareMenu")
+    console.log("Menu button clicked at", new Date().toLocaleTimeString());
+    const menu = document.getElementById("menuDropdown");
+    const share = document.getElementById("shareMenu");
     
-    share.style.display = "none"
-    menu.style.display = menu.style.display === "block" ? "none" : "block"
+    if (!menu) {
+        console.error("menuDropdown element not found!");
+        return;
+    }
+    
+    share.style.display = "none";
+    if (menu.style.display === "block") {
+        menu.style.display = "none";
+    } else {
+        menu.style.display = "block";
+    }
 }
 
 function toggleShare() {
@@ -516,8 +538,8 @@ document.addEventListener("click", function(e) {
     const share = document.getElementById("shareMenu")
     
     if (!e.target.closest(".top-bar")) {
-        menu.style.display = "none"
-        share.style.display = "none"
+        if (menu) menu.style.display = "none"
+        if (share) share.style.display = "none"
     }
 })
 
@@ -546,7 +568,7 @@ function saveToLocalStorage(key, data) {
     }
 }
 
-function getFromLocalStorage(key, maxAge = 300000) { // 5 دقائق افتراضياً
+function getFromLocalStorage(key, maxAge = 300000) {
     try {
         const item = JSON.parse(localStorage.getItem(key))
         if (item && (Date.now() - item.timestamp < maxAge)) {
@@ -644,4 +666,5 @@ document.addEventListener("DOMContentLoaded", () => {
     
     initTooltips()
     checkFontAwesome()
+    updateProfileLink() // تحديث رابط Profile
 })
