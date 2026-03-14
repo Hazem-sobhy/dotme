@@ -251,7 +251,6 @@ function applyCustomizations(custom) {
     // Border Radius
     if (t.borderRadius) {
         customCSS += `
-            .link img { border-radius: ${t.borderRadius}px !important; }
             .save-btn { border-radius: ${t.borderRadius}px !important; }
         `
     }

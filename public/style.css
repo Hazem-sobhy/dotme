@@ -13,7 +13,7 @@
     --bg-color: #ffffff;
     --text-color: #1e293b;
     --text-light: #64748b;
-    --border-radius: 16px;
+    border-radius: 50% !important;
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     
     /* Shadows */
@@ -350,7 +350,7 @@ h1 {
     max-width: 85px;
     height: auto;
     aspect-ratio: 1/1;
-    border-radius: var(--border-radius);
+    border-radius: 50%;  /* تم التعديل هنا */
     object-fit: cover;
     box-shadow: var(--shadow-sm);
     transition: all 0.4s var(--transition-normal);
@@ -980,7 +980,7 @@ body.minimal .link img {
     width: 50px;
     height: 50px;
     max-width: none;
-    border-radius: 12px;
+    border-radius: 50%;  /* تم التعديل هنا */
     margin: 0;
 }
 
